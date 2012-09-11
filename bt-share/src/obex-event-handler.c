@@ -71,6 +71,7 @@ static char *__get_file_name(int cnt, char **path)
 void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 			       void *user_data)
 {
+	int ret;
 	static int send_cnt = 0;
 	static char *name = NULL;
 	char str[NOTIFICATION_TEXT_LEN_MAX] = { 0 };
@@ -90,6 +91,8 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 
 	switch (event) {
 	case BLUETOOTH_EVENT_DISABLED:
+		g_free(server_auth_info.filename);
+		server_auth_info.filename = NULL;
 		_bt_terminate_app();
 		break;
 
@@ -263,7 +266,8 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 		DBG("gList len : %d\n",  g_slist_length(bt_transfer_list));
 		if (g_slist_length(bt_transfer_list) > 0) {
 			DBG("One more job existed !!\n");
-			if (!_request_file_send(bt_transfer_list->data)) {
+			ret = _request_file_send(bt_transfer_list->data);
+			if (ret != BLUETOOTH_ERROR_NONE) {
 				g_slist_free_full(bt_transfer_list,
 							(GDestroyNotify)_free_transfer_info);
 				bt_transfer_list = NULL;
@@ -274,8 +278,11 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_AUTHORIZE:
 		DBG("BT_EVENT_OBEX_TRANSFER_AUTHORIZE \n");
 		if (param->result == BLUETOOTH_ERROR_NONE) {
+			g_free(server_auth_info.filename);
+			server_auth_info.filename = NULL;
+
 			auth_info = param->param_data;
-			server_auth_info.filename = auth_info->filename;
+			server_auth_info.filename = g_strdup(auth_info->filename);
 			server_auth_info.length = auth_info->length;
 			if (server_auth_info.filename)
 				__bt_obex_file_push_auth(&server_auth_info);

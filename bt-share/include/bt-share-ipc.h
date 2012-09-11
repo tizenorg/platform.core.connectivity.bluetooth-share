@@ -140,7 +140,7 @@ struct _BtShareMethodClass {
 gboolean _bt_init_dbus_signal(void);
 void _free_transfer_info(opc_transfer_info_t *node);
 void _remove_transfer_info(opc_transfer_info_t *node);
-gboolean _request_file_send(opc_transfer_info_t *node);
+int _request_file_send(opc_transfer_info_t *node);
 void _bt_send_message_to_ui(int transfer_id,
 			    char *name,
 			    int percentage,

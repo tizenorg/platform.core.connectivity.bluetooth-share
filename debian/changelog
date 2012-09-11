@@ -1,3 +1,11 @@
+bluetooth-share (0.0.26) unstable; urgency=low
+
+  * Upload the package
+  * Git: slp/pkgs/b/bluetooth-share
+  * Tag: bluetooth-share_0.0.26
+
+ -- DoHyun Pyun <dh79.pyun@samsung.com>  Tue, 11 Sep 2012 11:05:27 +0900
+
 bluetooth-share (0.0.25) unstable; urgency=low
 
   * Upload the package

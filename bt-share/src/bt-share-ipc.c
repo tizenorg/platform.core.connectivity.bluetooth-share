@@ -187,28 +187,31 @@ void _remove_transfer_info(opc_transfer_info_t *node)
 	DBG("-\n");
 }
 
-gboolean _request_file_send(opc_transfer_info_t *node)
+int _request_file_send(opc_transfer_info_t *node)
 {
 	struct bt_appdata *ad = app_state;
+	int ret;
 	DBG("+\n");
-	retv_if(ad == NULL, FALSE);
-	retv_if(node == NULL, FALSE);
+	retv_if(ad == NULL, BLUETOOTH_ERROR_INVALID_PARAM);
+	retv_if(node == NULL, BLUETOOTH_ERROR_INVALID_PARAM);
 
-	if (bluetooth_opc_push_files((bluetooth_device_address_t *)node->addr,
-						node->file_path) != BLUETOOTH_ERROR_NONE) {
-		DBG("bluetooth_opc_push_files failed ");
-		return FALSE;
+	ret = bluetooth_opc_push_files((bluetooth_device_address_t *)node->addr,
+						node->file_path);
+	if (ret != BLUETOOTH_ERROR_NONE) {
+		DBG("bluetooth_opc_push_files failed : %d", ret);
+		return ret;
 	}
 
 	__bt_create_send_data(node);
 
 	DBG("-\n");
-	return TRUE;
+	return BLUETOOTH_ERROR_NONE;
 }
 
 static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 							DBusMessage *msg, void *data)
 {
+	int ret;
 	char *member;
 	const char *path = dbus_message_get_path(msg);
 
@@ -217,6 +220,7 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 
 	if (path == NULL || strcmp(path, "/") == 0)
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
 	member = (char *)dbus_message_get_member(msg);
 	DBG("member (%s)\n", member);
 
@@ -231,8 +235,12 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		node = __add_transfer_info(msg);
 		if (node == NULL)
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
 		if (bluetooth_opc_session_is_exist() == FALSE) {
-			if (!_request_file_send(node)) {
+			ret = _request_file_send(node);
+			if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
+				DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
+			} else if ( ret != BLUETOOTH_ERROR_NONE) {
 				_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL);
 				g_slist_free_full(bt_transfer_list,
 							(GDestroyNotify)_free_transfer_info);
@@ -262,8 +270,12 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		node = __add_transfer_info(msg);
 		if (node == NULL)
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
 		if (bluetooth_opc_session_is_exist() == FALSE) {
-			if (!_request_file_send(node)) {
+			ret = _request_file_send(node);
+			if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
+				DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
+			} else if ( ret != BLUETOOTH_ERROR_NONE) {
 				_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL);
 				g_slist_free_full(bt_transfer_list,
 								(GDestroyNotify)_free_transfer_info);

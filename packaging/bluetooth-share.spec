@@ -2,7 +2,7 @@
 
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
-Version:    0.0.25
+Version:    0.0.26
 Release:    1
 Group:      TO_BE/FILLED_IN
 License:    TO BE FILLED IN
