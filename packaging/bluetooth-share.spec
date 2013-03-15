@@ -2,15 +2,11 @@
 
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
-Version:    0.0.47
+Version:    0.0.46
 Release:    2
 Group:      TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
-Requires(post): vconf
-Requires(post): coreutils
-Requires(post): sqlite
-Requires(post): smack-utils
 BuildRequires:  cmake
 BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(appcore-efl)
