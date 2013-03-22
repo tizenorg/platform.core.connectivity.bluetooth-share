@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,10 +19,14 @@
 
 #include <pmapi.h>
 #include <glib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <vconf.h>
+#include <Ecore_File.h>
+
 #include "vconf-keys.h"
 #include "applog.h"
 #include "bt-share-common.h"
-#include <vconf.h>
 
 int _bt_share_block_sleep(gboolean is_block)
 {
@@ -110,5 +110,104 @@ int _bt_set_transfer_indicator(gboolean state)
 		return -1;
 	}
 	return 0;
+}
+
+static char *__bt_share_get_transfer_file_name(int file_type)
+{
+	int count = 0;
+	char *appendix;
+	char *file;
+	char *file_format;
+	char *file_name;
+
+	if (file_type == BT_HTTP_FILE) {
+		file_name = HTML_FILE_NAME;
+		file_format = HTML_FILE_FORMAT;
+	} else {
+		file_name = TXT_FILE_NAME;
+		file_format = TXT_FILE_FORMAT;
+	}
+
+	file = g_strdup(file_name);
+
+	/* While the file exists, increase the file name */
+	while (access(file, F_OK) == 0) {
+		g_free(file);
+
+		appendix = g_strdup_printf("_%d", count);
+		file = g_strdup_printf(file_format, appendix);
+		g_free(appendix);
+
+		count++;
+	}
+
+	return file;
+}
+
+void _bt_remove_tmp_file(char *file_path)
+{
+	if (g_str_has_prefix(file_path, BT_TMP_FILE) == TRUE) {
+		DBG("Remove the file: %s", file_path);
+		ecore_file_remove(file_path);
+	}
+}
+
+char *_bt_share_create_transfer_file(char *text)
+{
+	int fd;
+	int file_type;
+	char *file = NULL;
+	char *content;
+	char *url_sheme;
+	ssize_t write_size;
+
+	retv_if(text == NULL, NULL);
+
+	url_sheme = g_uri_parse_scheme(text);
+
+	if (url_sheme) {
+		/* HTTP file generate */
+		g_free(url_sheme);
+		file_type = BT_HTTP_FILE;
+	} else {
+		/* TXT file generate */
+		file_type = BT_TXT_FILE;
+	}
+
+	file = __bt_share_get_transfer_file_name(file_type);
+	retv_if(file == NULL, NULL);
+
+	fd = open(file, O_RDWR | O_CREAT, 0755);
+
+	if (fd < 0) {
+		ERR("Fail to open the file");
+		goto fail;
+	}
+
+	if (file_type == BT_HTTP_FILE) {
+		content = g_strdup_printf(HTML_FORMAT, text, text);
+	} else {
+		content = g_strdup(text);
+	}
+
+	DBG("content: \n%s", content);
+
+	write_size = write(fd, content, strlen(content));
+	g_free(content);
+	close(fd);
+	fd = -1;
+
+	if (write_size < 0) {
+		ERR("Fail to write in file");
+		goto fail;
+	}
+
+	return file;
+fail:
+	if (fd > 0)
+		close(fd);
+
+	g_free(file);
+	return NULL;
 }
 

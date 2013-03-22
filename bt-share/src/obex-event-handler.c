@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -174,9 +170,13 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 		DBG("BLUETOOTH_EVENT_OPC_CONNECTED, result [%d] \n", param->result);
 		if (param->result != BLUETOOTH_ERROR_NONE) {
 			_bt_create_warning_popup(param->result);
-
 			if (NULL != node && node->file_cnt > send_index) {
 				info = (bt_tr_data_t *)(ad->tr_next_data)->data;
+				if (info == NULL) {
+					DBG("info is NULL");
+					return;
+				}
+
 				s_id = info->sid;
 				DBG("info->sid = %d info->id = %d\n", info->sid, info->id);
 				while (NULL != ad->tr_next_data) {
@@ -206,12 +206,12 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 							NOTI_TR_TYPE_OUT, NULL, NULL);
 					_bt_set_notification_property(noti, QP_NO_DELETE);
 					_bt_insert_notification(noti,
-								BT_STR_SEND_NOTI, str,
+								BT_STR_SENT, str,
 								BT_ICON_QP_SEND);
 					ad->send_noti = noti;
 				} else {
 					_bt_update_notification(ad->send_noti,
-								BT_STR_SEND_NOTI, str,
+								BT_STR_SENT, str,
 								BT_ICON_QP_SEND);
 				}
 			}
@@ -328,14 +328,16 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 					NOTI_TR_TYPE_OUT, NULL, NULL);
 			_bt_set_notification_property(noti, QP_NO_DELETE);
 			_bt_insert_notification(noti,
-						BT_STR_SEND_NOTI, str,
+						BT_STR_SENT, str,
 						BT_ICON_QP_SEND);
 			ad->send_noti = noti;
 		} else {
 			_bt_update_notification(ad->send_noti,
-						BT_STR_SEND_NOTI, str,
+						BT_STR_SENT, str,
 						BT_ICON_QP_SEND);
 		}
+
+		_bt_remove_tmp_file(client_info->filename);
 
 		if (param->result != BLUETOOTH_ERROR_NONE) {
 			_bt_update_sent_data_status(ad->current_tr_uid,
@@ -389,12 +391,12 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 						NOTI_TR_TYPE_OUT, NULL, NULL);
 				_bt_set_notification_property(noti, QP_NO_DELETE);
 				_bt_insert_notification(noti,
-							BT_STR_SEND_NOTI, str,
+							BT_STR_SENT, str,
 							BT_ICON_QP_SEND);
 				ad->send_noti = noti;
 			} else {
 				_bt_update_notification(ad->send_noti,
-							BT_STR_SEND_NOTI, str,
+							BT_STR_SENT, str,
 							BT_ICON_QP_SEND);
 			}
 		}
@@ -530,12 +532,12 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 					NOTI_TR_TYPE_IN, NULL, NULL);
 				_bt_set_notification_property(noti, QP_NO_DELETE);
 				_bt_insert_notification(noti,
-						BT_STR_RECEIVED_NOTI, str,
+						BT_STR_RECEIVED, str,
 						BT_ICON_QP_RECEIVE);
 				ad->receive_noti = noti;
 			} else {
 				_bt_update_notification(ad->receive_noti,
-						BT_STR_RECEIVED_NOTI, str,
+						BT_STR_RECEIVED, str,
 						BT_ICON_QP_RECEIVE);
 			}
 		}
@@ -552,15 +554,34 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 
 void _bt_get_default_storage(char *storage)
 {
-	int val = -1;
-	if (-1 == vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT, (void *)&val)) {
+	int val;
+	int err;
+	char *path;
+
+	if (vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
+						(void *)&val)) {
 		DBG("vconf error\n");
-		val = 0;
+		val = BT_DEFAULT_MEM_PHONE;
 	}
-	if (val == 0) /* Phone memory is 0, MMC is 1 */
-		g_strlcpy(storage, BT_DOWNLOAD_PHONE_FOLDER, STORAGE_PATH_LEN_MAX);
+
+	if (val == BT_DEFAULT_MEM_MMC)
+		path = BT_DOWNLOAD_MMC_FOLDER;
 	else
-		g_strlcpy(storage, BT_DOWNLOAD_MMC_FOLDER, STORAGE_PATH_LEN_MAX);
+		path = BT_DOWNLOAD_PHONE_FOLDER;
+
+	if (access(path, W_OK) == 0) {
+		g_strlcpy(storage, path, STORAGE_PATH_LEN_MAX);
+		DBG("Storage path = [%s]\n", storage);
+		return;
+	}
+
+	if (mkdir(BT_DOWNLOAD_PHONE_FOLDER, 0755) < 0) {
+		err = -errno;
+		DBG("mkdir: %s(%d)", strerror(-err), -err);
+	}
+
+	g_strlcpy(storage, BT_DOWNLOAD_PHONE_FOLDER, STORAGE_PATH_LEN_MAX);
+
 	DBG("Default storage : %s\n", storage);
 }
 
@@ -569,11 +590,25 @@ void _bt_app_obex_download_dup_file_cb(void *data, void *obj,
 				       void *event_info)
 {
 	bt_obex_server_authorize_into_t *server_auth_info = data;
+	char storage[STORAGE_PATH_LEN_MAX] = { 0, };
+	char temp_filename[BT_FILE_PATH_LEN_MAX] = { 0, };
 
 	DBG("response : %d\n", (int)event_info);
 
 	if ((int)event_info == POPUP_RESPONSE_OK) {
 		DBG("OK button pressed \n");
+
+		_bt_get_default_storage(storage);
+		snprintf(temp_filename, BT_FILE_PATH_LEN_MAX, "%s/%s",
+				    storage, server_auth_info->filename);
+
+		if (remove(temp_filename) != 0) {
+			ERR("File remove failed\n");
+			bluetooth_obex_server_reject_authorize();
+			return;
+		}
+
+		DBG("temp_filename %s", temp_filename);
 		bluetooth_obex_server_accept_authorize(server_auth_info->filename);
 	} else if ((int)event_info == POPUP_RESPONSE_CANCEL) {
 		bluetooth_obex_server_reject_authorize();

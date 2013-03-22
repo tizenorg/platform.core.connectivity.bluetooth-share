@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share-api
+ * bluetooth-share-api
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +46,8 @@ typedef struct {
 	char *file_path;
 	char *dev_name;
 	char *addr;
+	char *type;
+	char *content;
 }bt_tr_data_t;
 
 

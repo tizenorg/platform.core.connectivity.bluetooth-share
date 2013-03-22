@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,9 +27,11 @@
 #include "bt-share-main.h"
 #include "obex-event-handler.h"
 #include "bluetooth-share-api.h"
+#include "bt-share-resource.h"
 
 #define BT_PERCENT_STR_LEN 5
 #define BT_PRIV_ID_STR_LEN 8
+#define BT_NOTI_STR_LEN_MAX 50
 
 notification_h _bt_create_notification(bt_qp_type_t type)
 {
@@ -100,6 +98,8 @@ int _bt_update_notification(notification_h noti,
 				char *icon_path)
 {
 	DBG("+\n");
+	char str[BT_NOTI_STR_LEN_MAX] = {0,};
+
 	if (!noti)
 		return BT_SHARE_FAIL;
 
@@ -112,16 +112,22 @@ int _bt_update_notification(notification_h noti,
 	}
 
 	if (title) {
-		ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE,
-								title, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		snprintf(str, sizeof(str), "%s: %s", BT_STR_SHARE, title);
+
+		ret = notification_set_text(noti,
+					NOTIFICATION_TEXT_TYPE_TITLE,
+					str, NULL,
+					NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (ret != NOTIFICATION_ERROR_NONE) {
 			ERR("Fail to notification_set_text\n");
 		}
 	}
 
 	if (content) {
-		ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-								content, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		ret = notification_set_text(noti,
+					NOTIFICATION_TEXT_TYPE_CONTENT,
+					content, NULL,
+					NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (ret != NOTIFICATION_ERROR_NONE) {
 			ERR("Fail to notification_set_text\n");
 		}

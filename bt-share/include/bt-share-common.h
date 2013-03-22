@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +30,19 @@ extern "C" {
 #define BT_SHARE_FAIL -1
 #define BT_SHARE_ERROR_NONE 0
 
+#define BT_TMP_DIR "/tmp/"
+#define BT_TMP_FILE BT_TMP_DIR"bluetooth_content_share"
+#define TXT_FILE_NAME BT_TMP_DIR"bluetooth_content_share.txt"
+#define HTML_FILE_NAME BT_TMP_DIR"bluetooth_content_share.html"
+#define TXT_FILE_FORMAT BT_TMP_DIR"bluetooth_content_share%s.txt"
+#define HTML_FILE_FORMAT BT_TMP_DIR"bluetooth_content_share%s.html"
+#define HTML_FORMAT "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=UTF-8\"/></head><body><a href=\"%s\">%s</a></body></html>"
+
+typedef enum {
+	BT_HTTP_FILE,
+	BT_TXT_FILE,
+} bt_file_t;
+
 typedef enum {
 	BT_STATUS_OFF         = 0x0000,
 	BT_STATUS_ON          = 0x0001,
@@ -44,7 +53,8 @@ typedef enum {
 
 int _bt_share_block_sleep(gboolean is_block);
 int _bt_set_transfer_indicator(gboolean state);
-
+char *_bt_share_create_transfer_file(char *text);
+void _bt_remove_tmp_file(char *file_path);
 
 #ifdef __cplusplus
 }

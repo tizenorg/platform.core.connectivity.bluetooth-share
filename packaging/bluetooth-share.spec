@@ -2,11 +2,15 @@
 
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
-Version:    0.0.46
+Version:    0.0.47
 Release:    2
 Group:      TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
+Requires(post): vconf
+Requires(post): coreutils
+Requires(post): sqlite
+Requires(post): smack-utils
 BuildRequires:  cmake
 BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(appcore-efl)
@@ -49,6 +53,9 @@ Development package for libbluetooth-share
 %setup -q
 
 %build
+export CFLAGS+=" -fpie -fvisibility=hidden"
+export LDFLAGS+=" -Wl,--rpath=/usr/lib -Wl,--as-needed -Wl,--unresolved-symbols=ignore-in-shared-libs -pie"
+
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 make
 
@@ -87,7 +94,9 @@ then
 		file_path TEXT,
 		dev_name TEXT,
 		timestamp INTEGER default 0,
-		addr TEXT
+		addr TEXT,
+		type TEXT,
+		content TEXT
 	);
 	create table if not exists outbound (
 		id INTEGER PRIMARY KEY autoincrement,
@@ -96,7 +105,9 @@ then
 		file_path TEXT,
 		dev_name TEXT,
 		timestamp INTEGER default 0,
-		addr TEXT
+		addr TEXT,
+		type TEXT,
+		content TEXT
 	);
 	'
 fi

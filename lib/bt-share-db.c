@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share-api
+ * bluetooth-share-api
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -101,9 +97,9 @@ static int __bt_db_insert_record(sqlite3 *db, int db_table, bt_tr_data_t *data)
 	retvm_if(data == NULL, BT_SHARE_ERR_INTERNAL, "Insert data is null");
 
 	snprintf(query, BT_DB_QUERY_LEN,
-		"INSERT INTO %s (id, sid, tr_status, file_path, dev_name, timestamp, addr) VALUES(?, '%d', '%d', '%s', '%s', '%d', '%s');",
+		"INSERT INTO %s (id, sid, tr_status, file_path, dev_name, timestamp, addr, type, content) VALUES(?, '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s');",
 		TABLE(db_table), data->sid, data->tr_status, data->file_path,
-		data->dev_name, data->timestamp, data->addr);
+		data->dev_name, data->timestamp, data->addr, data->type, data->content);
 
 	ret = sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);
 	if (ret != SQLITE_OK)
@@ -179,6 +175,8 @@ static bt_tr_data_t *__bt_db_get_record_by_id(sqlite3 *db, int db_table, int id)
 		data->dev_name = g_strdup(TEXT(stmt, idx++));
 		data->timestamp = INT(stmt, idx++);
 		data->addr = g_strdup(TEXT(stmt, idx++));
+		data->type = g_strdup(TEXT(stmt, idx++));
+		data->content = g_strdup(TEXT(stmt, idx++));
 	} else {
 		goto error;
 	}
@@ -228,6 +226,8 @@ static GSList *__bt_db_get_record_list(sqlite3 *db, const char*query)
 		data->dev_name = g_strdup(TEXT(stmt, idx++));
 		data->timestamp = INT(stmt, idx++);
 		data->addr = g_strdup(TEXT(stmt, idx++));
+		data->type = g_strdup(TEXT(stmt, idx++));
+		data->content = g_strdup(TEXT(stmt, idx++));
 
 		slist = g_slist_append(slist, data);
 
@@ -247,7 +247,7 @@ static unsigned int __bt_db_get_last_session_id(sqlite3 *db, int db_table)
 	char query[BT_DB_QUERY_LEN] = {0, };
 	sqlite3_stmt *stmt = NULL;
 
-	retvm_if(db == NULL, NULL, "DB handler is null");
+	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handler is null");
 
 	snprintf(query, BT_DB_QUERY_LEN,
 		"SELECT * FROM %s WHERE id=(SELECT MAX(id) FROM %s);",
@@ -285,6 +285,8 @@ static void __bt_release_memory(bt_tr_data_t *data)
 	g_free(data->file_path);
 	g_free(data->dev_name);
 	g_free(data->addr);
+	g_free(data->type);
+	g_free(data->content);
 	g_free(data);
 }
 
@@ -436,7 +438,7 @@ EXPORT_API GSList *bt_share_get_tr_data_list_by_status(sqlite3 *db, int db_table
 
 EXPORT_API unsigned int bt_share_get_last_session_id(sqlite3 *db, int db_table)
 {
-	retvm_if(db == NULL, NULL, "DB handle is NULL");
+	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handle is NULL");
 
 	return __bt_db_get_last_session_id(db, db_table);
 }

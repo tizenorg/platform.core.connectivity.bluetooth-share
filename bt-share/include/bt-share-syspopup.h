@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -96,10 +92,6 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 			    void *data);
 
 gboolean _bt_app_popup_memoryfull(gpointer user_data);
-
-//void _bt_app_obex_download_dup_file_cb(void *data, void *obj,
-//				       void *event_info);
-
 
 #ifdef __cplusplus
 }

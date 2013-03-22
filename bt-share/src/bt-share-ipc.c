@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,6 +38,7 @@
 #include "bt-share-resource.h"
 #include "obex-event-handler.h"
 #include "bluetooth-share-api.h"
+#include "bt-share-common.h"
 
 GSList *bt_transfer_list = NULL;
 DBusConnection *dbus_connection = NULL;
@@ -58,6 +55,8 @@ static void __bt_tr_data_free(bt_tr_data_t *data)
 	g_free(data->file_path);
 	g_free(data->dev_name);
 	g_free(data->addr);
+	g_free(data->type);
+	g_free(data->content);
 	g_free(data);
 }
 
@@ -103,10 +102,10 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 	char *filepath = NULL;
 	char *mode = NULL;
 	char *name = NULL;
+	char *type = NULL;
 	opc_transfer_info_t *data;
 	int i = 0;
 	char *token = NULL;
-	char *tmp = NULL;
 	char *ptr = NULL;
 
 	retv_if(msg == NULL, NULL);
@@ -118,6 +117,7 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 				DBUS_TYPE_STRING, &filepath,
 				DBUS_TYPE_STRING, &mode,
 				DBUS_TYPE_STRING, &name,
+				DBUS_TYPE_STRING, &type,
 				DBUS_TYPE_INVALID);
 
 	retv_if(cnt <= 0, NULL);
@@ -132,23 +132,29 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 	DBG(" filepath( %s )\n", filepath);
 	DBG(" mode ( %s )\n", mode);
 	DBG(" name ( %s )\n", name);
+	DBG(" type ( %s )\n", type);
 
 	data = g_new0(opc_transfer_info_t, 1);
 
+	data->content = g_new0(char *, cnt + 1);
 	data->file_path = g_new0(char *, cnt + 1);
 	data->file_cnt = cnt;
 	memcpy(data->addr, addr, BLUETOOTH_ADDRESS_LENGTH);
 	memcpy(data->name, name, BLUETOOTH_DEVICE_NAME_LENGTH_MAX);
+	data->type = g_strdup(type);
 
 	token = strtok_r(filepath, FILE_PATH_DELIM, &ptr);
 	while ((token != NULL) && (i < cnt)) {
-		len = strlen(token);
+		if (g_strcmp0(type, "text") == 0) {
+			data->file_path[i] = _bt_share_create_transfer_file(token);
+		} else {
+			data->file_path[i] = g_strdup(token);
+		}
 
-		tmp = g_malloc0(len + 1);
+		DBG(" file path ( %s )\n", data->file_path[i]);
 
-		g_strlcpy(tmp, token, len + 1);
-		data->file_path[i] = tmp;
-		DBG("File [%d] [%s]\n", i, data->file_path[i]);
+		data->content[i] = g_strdup(token);
+		DBG("Content [%d] [%s]\n", i, data->content[i]);
 		i++;
 
 		token = strtok_r(NULL, FILE_PATH_DELIM, &ptr);
@@ -168,9 +174,13 @@ void _free_transfer_info(opc_transfer_info_t *node)
 	ret_if(node == NULL);
 
 	for (i = 0; i < node->file_cnt; i++) {
+		_bt_remove_tmp_file(node->file_path[i]);
 		g_free(node->file_path[i]);
+		g_free(node->content[i]);
 	}
 	g_free(node->file_path);
+	g_free(node->content);
+	g_free(node->type);
 	g_free(node);
 
 	DBG("-\n");
@@ -389,9 +399,7 @@ void _bt_create_warning_popup(int error_type)
 	/* Otherwise create the process and terminate it after popup shown */
 	if (sysman_get_pid(UI_PKG_PATH) == -1) {
 		char str[BT_TEXT_LEN_MAX] = {0,};
-		bundle *b = NULL;
-		b = bundle_create();
-		ret_if(b == NULL);
+		bundle *b;
 
 		switch(error_type) {
 		case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
@@ -402,9 +410,11 @@ void _bt_create_warning_popup(int error_type)
 			snprintf(str, BT_TEXT_LEN_MAX, "%s", BT_STR_UNABLE_TO_SEND);
 			break;
 		default:
-			bundle_free(b);
 			return;
 		}
+
+		b = bundle_create();
+		ret_if(b == NULL);
 
 		bundle_add(b, "launch-type", "warning_popup");
 		bundle_add(b, "message", str);
@@ -507,15 +517,13 @@ static void __bt_create_send_data(opc_transfer_info_t *node)
 	for (count = 0; count < node->file_cnt; count++) {
 		bt_tr_data_t *tmp;
 		tmp = g_malloc0(sizeof(bt_tr_data_t));
-		if (!tmp) {
-			bt_share_close_db(db);
-			return;
-		}
 
 		tmp->tr_status = BT_TR_ONGOING;
 		tmp->sid = session_id + 1;
 		tmp->file_path = g_strdup(node->file_path[count]);
+		tmp->content = g_strdup(node->content[count]);
 		tmp->dev_name =  g_strdup(node->name);
+		tmp->type =  g_strdup(node->type);
 		tmp->timestamp = __bt_get_current_timedata();
 		tmp->addr = __bt_conv_addr_type_to_addr_string(node->addr);
 		bt_share_add_tr_data(db, BT_DB_OUTBOUND, tmp);
@@ -547,15 +555,12 @@ gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status)
 	DBG("uid = %d  \n", uid);
 	sqlite3 *db = NULL;
 	bt_tr_data_t *tmp;
-	tmp = g_malloc0(sizeof(bt_tr_data_t));
-	if (!tmp)
-		return FALSE;
 
 	db = bt_share_open_db();
-	if (!db) {
-		g_free(tmp);
+	if (!db)
 		return FALSE;
-	}
+
+	tmp = g_malloc0(sizeof(bt_tr_data_t));
 
 	tmp->tr_status = status;
 	tmp->timestamp = __bt_get_current_timedata();
@@ -576,15 +581,12 @@ gboolean _bt_add_recv_transfer_status_data(char *device_name,
 	bt_tr_data_t *tmp;
 
 	DBG("Name [%s]\n", device_name);
-	tmp = g_malloc0(sizeof(bt_tr_data_t));
-	if (!tmp)
-		return FALSE;
 
 	db = bt_share_open_db();
-	if (!db) {
-		g_free(tmp);
+	if (!db)
 		return FALSE;
-	}
+
+	tmp = g_malloc0(sizeof(bt_tr_data_t));
 
 	tmp->tr_status = status;
 	tmp->file_path = g_strdup(filepath);
@@ -644,7 +646,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 					ad->send_data.tr_success, ad->send_data.tr_fail);
 
 				_bt_update_notification(ad->send_noti,
-						BT_STR_SEND_NOTI, str,
+						BT_STR_SENT, str,
 						BT_ICON_QP_SEND);
 			} else {
 				_bt_delete_notification(ad->send_noti);
@@ -685,7 +687,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 					ad->recv_data.tr_success, ad->recv_data.tr_fail);
 
 				_bt_update_notification(ad->receive_noti,
-						BT_STR_RECEIVED_NOTI, str,
+						BT_STR_RECEIVED, str,
 						BT_ICON_QP_RECEIVE);
 			} else {
 				_bt_delete_notification(ad->receive_noti);

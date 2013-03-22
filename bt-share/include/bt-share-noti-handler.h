@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +25,8 @@ extern "C" {
 #endif
 
 #define STORAGE_PATH_LEN_MAX 30
-
+#define BT_DEFAULT_MEM_PHONE 0
+#define BT_DEFAULT_MEM_MMC 1
 
 #define BT_DOWNLOAD_PHONE_FOLDER "/opt/usr/media/Downloads"
 #define BT_DOWNLOAD_MMC_FOLDER "/opt/storage/sdcard"
@@ -37,6 +34,7 @@ extern "C" {
 #define BT_FTP_FOLDER "/opt/share/bt-ftp"
 
 void _bt_init_vconf_notification(void);
+void _bt_deinit_vconf_notification(void);
 #ifdef __cplusplus
 }
 #endif

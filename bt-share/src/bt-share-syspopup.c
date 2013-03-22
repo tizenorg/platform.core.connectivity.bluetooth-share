@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,15 +28,9 @@
 #include "bt-share-resource.h"
 #include "obex-event-handler.h"
 
-
-
-
 extern struct bt_appdata *app_state;
 #define BT_POPUP_SYSPOPUP_TIMEOUT_FOR_MULTIPLE_POPUPS 200
 #define BT_SYSPOPUP_EVENT_LEN_MAX 50
-
-
-
 
 static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 {
@@ -51,16 +41,14 @@ static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 		ERR("There is some problem with the user data..popup can not be created\n");
 		return FALSE;
 	}
-	ret = syspopup_launch("bt-syspopup", b);
 
+	ret = syspopup_launch("bt-syspopup", b);
 	if (0 > ret) {
 		ERR("launching sys-popup failed\n");
-		return TRUE;
-	} else {
-		DBG("Hurray Popup launched \n");
-		bundle_free(b);
-		return FALSE;
 	}
+
+	bundle_free(b);
+	return FALSE;
 }
 
 int _bt_launch_system_popup(bt_app_event_type_t event_type,

@@ -1,17 +1,13 @@
 /*
- *  bluetooth-share
+ * bluetooth-share
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
- *
- * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
- *           GirishAshok Joshi <girish.joshi@samsung.com>
- *           DoHyun Pyun <dh79.pyun@samsung.com>
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *              http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,6 +47,7 @@ static void __bt_release_service(struct bt_appdata *ad)
 	if (ad == NULL)
 		return;
 
+	_bt_deinit_vconf_notification();
 	_bt_delete_notification(ad->send_noti);
 	_bt_delete_notification(ad->receive_noti);
 	_bt_delete_notification(ad->opc_noti);
@@ -65,6 +62,8 @@ static void __bt_release_service(struct bt_appdata *ad)
 
 	if (vconf_set_bool(BT_VCONF_OPP_SERVER_INIT, FALSE) < 0)
 		ERR("Fail to set the vconf");
+
+	DBG("Terminating bluetooth-share daemon");
 }
 
 static void __bt_sigterm_handler(int signo)
@@ -130,7 +129,7 @@ static void __bt_update_notification_status_values()
 				NOTI_TR_TYPE_OUT, NULL, NULL);
 			_bt_set_notification_property(noti, QP_NO_DELETE | QP_NO_TICKER);
 			_bt_insert_notification(noti,
-				BT_STR_SEND_NOTI, str,
+				BT_STR_SENT, str,
 				BT_ICON_QP_SEND);
 			ad->send_noti = noti;
 		}
@@ -168,7 +167,7 @@ static void __bt_update_notification_status_values()
 				NOTI_TR_TYPE_IN, NULL, NULL);
 			_bt_set_notification_property(noti, QP_NO_DELETE | QP_NO_TICKER);
 			_bt_insert_notification(noti,
-				BT_STR_RECEIVED_NOTI, str,
+				BT_STR_RECEIVED, str,
 				BT_ICON_QP_RECEIVE);
 			ad->receive_noti = noti;
 		}
@@ -181,6 +180,43 @@ static void __bt_update_notification_status_values()
 	bt_share_close_db(db);
 
 	return;
+}
+
+static notification_h __bt_update_notification_adapter_status(void)
+{
+	notification_h noti;
+	notification_error_e ret;
+
+	noti  = _bt_create_notification(BT_NOTI_T);
+	if (!noti)
+		return NULL;
+
+	ret = notification_set_property(noti, QP_NO_DELETE | QP_NO_TICKER);
+	if (ret != NOTIFICATION_ERROR_NONE) {
+		goto failed;
+	}
+
+	ret = notification_set_application(noti, "ug-bluetooth-efl");
+	if (ret != NOTIFICATION_ERROR_NONE) {
+		goto failed;
+	}
+
+	ret = notification_set_display_applist(noti,
+			 NOTIFICATION_DISPLAY_APP_NOTIFICATION_TRAY);
+	if (ret != NOTIFICATION_ERROR_NONE) {
+		goto failed;
+	}
+
+	_bt_insert_notification(noti,
+			BT_STR_BLUETOOTH_ON, BT_STR_BLUETOOTH_AVAILABLE,
+			BT_ICON_QP_BT_ON);
+	return noti;
+
+failed:
+	ERR("Fail to register notification");
+	notification_free(noti);
+	return NULL;
+
 }
 
 static gboolean __bt_dbus_request_name(void)
@@ -244,11 +280,11 @@ void _bt_terminate_app(void)
 	}
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
-	DBG("+");
 	int ret;
 	struct bt_appdata ad;
+	DBG("Starting bluetooth-share daemon");
 	memset(&ad, 0, sizeof(struct bt_appdata));
 	app_state = &ad;
 
@@ -290,11 +326,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	notification_h noti;
+	noti = __bt_update_notification_adapter_status();
+
 	main_loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(main_loop);
 
+	_bt_delete_notification(noti);
 	__bt_release_service(&ad);
 
-	DBG("-");
 	return 0;
 }
