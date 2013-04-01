@@ -4,11 +4,6 @@
         <provide>
             <label name="bt_share::db"/>
         </provide>
-        <request>
-            <smack request="dbus" type="w"/>
-            <smack request="system::vconf" type="arwxt"/>
-            <smack request="bt_share::db" type="rw"/>
-        </request>
     </define>
     <assign>
         <filesystem path="/usr/share/dbus-1/services/org.bluetooth.share.service" label="_"/>
