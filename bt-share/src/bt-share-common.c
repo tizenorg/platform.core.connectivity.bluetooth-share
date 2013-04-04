@@ -195,7 +195,6 @@ char *_bt_share_create_transfer_file(char *text)
 	write_size = write(fd, content, strlen(content));
 	g_free(content);
 	close(fd);
-	fd = -1;
 
 	if (write_size < 0) {
 		ERR("Fail to write in file");
@@ -204,9 +203,6 @@ char *_bt_share_create_transfer_file(char *text)
 
 	return file;
 fail:
-	if (fd > 0)
-		close(fd);
-
 	g_free(file);
 	return NULL;
 }
