@@ -31,10 +31,12 @@
 extern struct bt_appdata *app_state;
 #define BT_POPUP_SYSPOPUP_TIMEOUT_FOR_MULTIPLE_POPUPS 200
 #define BT_SYSPOPUP_EVENT_LEN_MAX 50
+#define BT_SYSPOPUP_MAX_CALL 10
 
 static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 {
 	int ret = 0;
+	struct bt_appdata *ad = app_state;
 	bundle *b = (bundle *) user_data;
 
 	if (NULL == b) {
@@ -42,10 +44,17 @@ static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 		return FALSE;
 	}
 
+	ad->syspopup_call++;
+
 	ret = syspopup_launch("bt-syspopup", b);
 	if (0 > ret) {
 		ERR("launching sys-popup failed\n");
+		if (ad->syspopup_call < BT_SYSPOPUP_MAX_CALL) {
+			return TRUE;
+		}
 	}
+
+	ad->syspopup_call = 0;
 
 	bundle_free(b);
 	return FALSE;
@@ -99,6 +108,9 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 	  * to solve this problem after discussion it is decided that  if
 	  * the popup launch fails then it will be retried
 	  * after small timeout. */
+
+	ad->syspopup_call = 0;
+
 	ret = syspopup_launch("bt-syspopup", b);
 	if (0 > ret) {
 		ERR("Popup launch failed...retry = %d\n", ret);

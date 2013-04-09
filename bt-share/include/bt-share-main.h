@@ -61,6 +61,7 @@ struct bt_appdata {
 	notification_h receive_noti;
 	notification_h opc_noti;
 	int opc_noti_id;
+	int syspopup_call;
 	DBusGConnection *conn;
 	GObject *object;
 	gboolean obex_server_init;
