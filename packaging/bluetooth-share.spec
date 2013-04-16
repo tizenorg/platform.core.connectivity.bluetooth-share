@@ -81,8 +81,6 @@ then
 	ln -s /opt/storage/sdcard /opt/share/bt-ftp/SD_External
 fi
 
-vconftool set -tf bool memory/private/bluetooth-share/quickpanel_clear_btn_status FALSE -g 6520 -i
-
 if [ ! -f /opt/dbspace/.bluetooth_trasnfer.db ]
 then
 	sqlite3 /opt/dbspace/.bluetooth_trasnfer.db 'PRAGMA journal_mode = PERSIST;
