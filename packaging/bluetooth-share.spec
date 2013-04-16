@@ -81,9 +81,9 @@ then
 	ln -s /opt/storage/sdcard /opt/share/bt-ftp/SD_External
 fi
 
-if [ ! -f /opt/dbspace/.bluetooth_trasnfer.db ]
+if [ ! -f /opt/usr/dbspace/.bluetooth_trasnfer.db ]
 then
-	sqlite3 /opt/dbspace/.bluetooth_trasnfer.db 'PRAGMA journal_mode = PERSIST;
+	sqlite3 /opt/usr/dbspace/.bluetooth_trasnfer.db 'PRAGMA journal_mode = PERSIST;
         create table if not exists inbound (
 		id INTEGER PRIMARY KEY autoincrement,
 		sid INTEGER,
@@ -109,15 +109,15 @@ then
 	'
 fi
 
-chown :5000 /opt/dbspace/.bluetooth_trasnfer.db
-chown :5000 /opt/dbspace/.bluetooth_trasnfer.db-journal
-chmod 660 /opt/dbspace/.bluetooth_trasnfer.db
-chmod 660 /opt/dbspace/.bluetooth_trasnfer.db-journal
+chown :5000 /opt/usr/dbspace/.bluetooth_trasnfer.db
+chown :5000 /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
+chmod 660 /opt/usr/dbspace/.bluetooth_trasnfer.db
+chmod 660 /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
 
 if [ -f /usr/lib/rpm-plugins/msm.so ]
 then
-chsmack -a 'bt_share::db' /opt/dbspace/.bluetooth_trasnfer.db
-chsmack -a 'bt_share::db' /opt/dbspace/.bluetooth_trasnfer.db-journal
+chsmack -a 'bt_share::db' /opt/usr/dbspace/.bluetooth_trasnfer.db
+chsmack -a 'bt_share::db' /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
 fi
 
 %files
