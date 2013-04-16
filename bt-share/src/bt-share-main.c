@@ -60,9 +60,6 @@ static void __bt_release_service(struct bt_appdata *ad)
 	bluetooth_obex_server_deinit();
 	_bt_unregister_notification_cb(ad);
 
-	if (vconf_set_bool(BT_VCONF_OPP_SERVER_INIT, FALSE) < 0)
-		ERR("Fail to set the vconf");
-
 	DBG("Terminating bluetooth-share daemon");
 }
 

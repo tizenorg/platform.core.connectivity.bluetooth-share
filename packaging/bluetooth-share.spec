@@ -82,7 +82,6 @@ then
 fi
 
 vconftool set -tf bool memory/private/bluetooth-share/quickpanel_clear_btn_status FALSE -g 6520 -i
-vconftool set -tf bool memory/private/bluetooth-share/opp_server_init FALSE -g 6520 -i
 
 if [ ! -f /opt/dbspace/.bluetooth_trasnfer.db ]
 then

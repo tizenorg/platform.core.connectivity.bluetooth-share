@@ -304,8 +304,7 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 				BT_SHARE_FRWK_SIGNAL_DEINIT)) {
 		/* Deinitialize the obex server */
 		if (bluetooth_obex_server_deinit() == BLUETOOTH_ERROR_NONE) {
-			if (vconf_set_bool(BT_VCONF_OPP_SERVER_INIT, FALSE)< 0)
-				ERR("Fail to set the vconf");
+			DBG("Obex Server deinit");
 		}
 	} else {
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

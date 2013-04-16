@@ -35,8 +35,6 @@ extern "C" {
 #define UI_PACKAGE "org.tizen.bluetooth-share-ui"
 #define UI_PKG_PATH "/opt/apps/org.tizen.bluetooth-share-ui/bin/bluetooth-share-ui"
 
-#define BT_VCONF_OPP_SERVER_INIT "memory/private/bluetooth-share/opp_server_init"
-
 typedef void (*bt_app_cb) (void *, void *, void *);
 
 typedef struct {
