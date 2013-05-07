@@ -122,6 +122,7 @@ fi
 
 %files
 %manifest bluetooth-share.manifest
+/opt/etc/smack/accesses.d/bluetooth-share.rule
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
 %{_datadir}/dbus-1/services/org.bluetooth.share.service
