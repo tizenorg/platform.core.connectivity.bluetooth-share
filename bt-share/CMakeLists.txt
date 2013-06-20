@@ -33,7 +33,6 @@ SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -pie")
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 SET(BINDIR "/usr/bin")
 SET(EXEC_PREFIX "\${prefix}")
-#SET(LIBDIR "\${prefix}/lib")
 SET(INCLUDEDIR "/usr/include")
 SET(VERSION 1.0)
 
