@@ -1,0 +1,10 @@
+Change-Id: I1a3181e2113e7318c1df430d5ad82678ea9d91a8
+Verified+1: Junfeng Dong <junfeng.dong@intel.com>
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Code-Review+1: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Verified+1: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Thu, 20 Jun 2013 07:39:42 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4156
+Project: platform/core/connectivity/bluetooth-share
+Branch: refs/heads/tizen
