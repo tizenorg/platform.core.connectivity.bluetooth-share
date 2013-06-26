@@ -1,0 +1,9 @@
+Change-Id: Ia766d8d50e19cffc33f7193084f682353e9e8dea
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Code-Review+1: Victor Hakoun <victor.hakoun@eurogiciel.fr>
+Verified+1: Victor Hakoun <victor.hakoun@eurogiciel.fr>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Wed, 26 Jun 2013 05:22:05 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4274
+Project: platform/core/connectivity/bluetooth-share
+Branch: refs/heads/tizen
