@@ -4,7 +4,7 @@ Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
 Version:    0.0.47
 Release:    2
-Group:      TO_BE/FILLED_IN
+Group:      Connectivity/Bluetooth
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
 Requires(post): vconf
@@ -118,6 +118,14 @@ then
 chsmack -a 'bt_share::db' /opt/usr/dbspace/.bluetooth_trasnfer.db
 chsmack -a 'bt_share::db' /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
 fi
+
+%post -n libbluetooth-share-devel -p /sbin/ldconfig
+
+%post -n libbluetooth-share -p /sbin/ldconfig
+
+%postun -n libbluetooth-share-devel -p /sbin/ldconfig
+
+%postun -n libbluetooth-share -p /sbin/ldconfig
 
 %files
 %manifest bluetooth-share.manifest
