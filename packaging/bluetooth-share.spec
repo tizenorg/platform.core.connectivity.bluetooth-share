@@ -7,6 +7,9 @@ Release:    2
 Group:      Connectivity/Bluetooth
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
+Source1001:	%{name}.manifest
+Source1002:	libbluetooth-share.manifest
+Source1003:	libbluetooth-share-devel.manifest
 Requires(post): vconf
 Requires(post): coreutils
 Requires(post): sqlite
@@ -51,6 +54,7 @@ Development package for libbluetooth-share
 
 %prep
 %setup -q
+cp %{SOURCE1001} %{SOURCE1002} %{SOURCE1003} .
 
 %build
 export CFLAGS+=" -fpie -fvisibility=hidden"
@@ -128,7 +132,7 @@ fi
 %postun -n libbluetooth-share -p /sbin/ldconfig
 
 %files
-%manifest bluetooth-share.manifest
+%manifest %{name}.manifest
 /opt/etc/smack/accesses.d/bluetooth-share.rule
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
@@ -136,10 +140,12 @@ fi
 %{_optdir}/share/bt-ftp
 
 %files -n libbluetooth-share
+%manifest libbluetooth-share.manifest
 %defattr(-, root, root)
 %{_libdir}/libbluetooth-share-api.so.0.*
 
 %files -n libbluetooth-share-devel
+%manifest libbluetooth-share-devel.manifest
 %defattr(-, root, root)
 /usr/include/bluetooth-share-api/bluetooth-share-api.h
 %{_libdir}/libbluetooth-share-api.so
