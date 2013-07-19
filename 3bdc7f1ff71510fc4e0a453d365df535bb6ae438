@@ -1,0 +1,9 @@
+Code-Review+2: Ryan Ware <ware@linux.intel.com>
+Verified+1: Ryan Ware <ware@linux.intel.com>
+Code-Review+1: Patrick McCarty <patrick.mccarty@linux.intel.com>
+Code-Review+1: Michael Demeter <michael.demeter@intel.com>
+Submitted-by: Ryan Ware <ware@linux.intel.com>
+Submitted-at: Fri, 19 Jul 2013 15:27:12 -0700
+Reviewed-on: https://review.tizen.org/gerrit/5823
+Project: platform/core/connectivity/bluetooth-share
+Branch: refs/heads/tizen
