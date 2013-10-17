@@ -47,4 +47,4 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} -L${CMAKE_CURRENT_SOURCE_D
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${BINDIR})
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/bluetooth-share.rule DESTINATION /opt/etc/smack/accesses.d)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION share/dbus-1/services)
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION share/dbus-1/system-services)

@@ -136,7 +136,7 @@ fi
 /opt/etc/smack/accesses.d/bluetooth-share.rule
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
-%{_datadir}/dbus-1/services/org.bluetooth.share.service
+%{_datadir}/dbus-1/system-services/org.bluetooth.share.service
 %{_optdir}/share/bt-ftp
 
 %files -n libbluetooth-share
