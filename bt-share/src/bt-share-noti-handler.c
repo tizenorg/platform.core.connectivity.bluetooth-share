@@ -19,6 +19,10 @@
 
 #include <glib.h>
 #include <vconf.h>
+
+/* For multi-user support */
+#include <tzplatform_config.h>
+
 #include "applog.h"
 #include "bluetooth-api.h"
 #include "bt-share-noti-handler.h"

@@ -8,7 +8,7 @@ SET(HEADERS bluetooth-share-api.h)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(apipkgs REQUIRED glib-2.0 db-util dlog)
+pkg_check_modules(apipkgs REQUIRED glib-2.0 db-util dlog libtzplatform-config)
 
 FOREACH(flag ${apipkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")

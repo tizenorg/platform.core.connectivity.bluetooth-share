@@ -21,7 +21,8 @@ pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
 				dlog vconf syspopup-caller pmapi sysman
 				notification calendar-service2 contacts-service2
 				appsvc appcore-efl libprivilege-control
-				capi-content-media-content)
+				capi-content-media-content
+				libtzplatform-config)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")

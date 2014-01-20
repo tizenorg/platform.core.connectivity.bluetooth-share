@@ -23,6 +23,10 @@
 #include <appcore-efl.h>
 #include <privilege-control.h>
 #include <vconf.h>
+
+/* For multi-user support */
+#include <tzplatform_config.h>
+
 #include "applog.h"
 #include "bt-share-main.h"
 #include "bluetooth-api.h"

@@ -24,11 +24,15 @@
 #include <fcntl.h>
 #include <sqlite3.h>
 #include <db-util.h>
+#include <errno.h>
+#include <unistd.h>
+
+/* For multi-user support */
+#include <tzplatform_config.h>
 
 #include "applog.h"
 #include "bt-share-db.h"
 #include "bluetooth-share-api.h"
-
 
 static int __bt_exec_query(sqlite3 *db, char *query)
 {
@@ -49,11 +53,19 @@ static int __bt_exec_query(sqlite3 *db, char *query)
 	return BT_SHARE_ERR_NONE;
 }
 
-
 sqlite3 *__bt_db_open(void)
 {
 	int ret;
 	sqlite3 *db = NULL;
+	struct stat sts;
+
+	/* Check if the DB exists; if not, create it and initialize it */
+	ret = stat(BT_TRANSFER_DB, &sts);
+	if (ret == -1 && errno == ENOENT)
+	{
+		DBG("DB %s doesn't exist, it needs to be created and initialized", BT_TRANSFER_DB);
+		system(SCRIPT_INIT_DB);
+	}
 
 	ret = db_util_open(BT_TRANSFER_DB, &db, DB_UTIL_REGISTER_HOOK_METHOD);
 	if (ret) {
@@ -64,7 +76,6 @@ sqlite3 *__bt_db_open(void)
 
 	return db;
 }
-
 
 static int __bt_db_close(sqlite3 *db)
 {
