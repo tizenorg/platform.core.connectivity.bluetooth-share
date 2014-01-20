@@ -1,15 +1,14 @@
-%define _optdir /opt
-
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
 Version:    0.0.47
-Release:    2
-Group:      Connectivity/Bluetooth
-License:    Apache License, Version 2.0
+Release:    0
+Group:      Network & Connectivity/Bluetooth
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
-Source1001:	%{name}.manifest
-Source1002:	libbluetooth-share.manifest
-Source1003:	libbluetooth-share-devel.manifest
+Source1001: %{name}.manifest
+Source1002: libbluetooth-share.manifest
+Source1003: libbluetooth-share-devel.manifest
+Source1004: init_db.sh
 Requires(post): vconf
 Requires(post): coreutils
 Requires(post): sqlite
@@ -32,6 +31,7 @@ BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(libprivilege-control)
 BuildRequires:  pkgconfig(capi-content-media-content)
+BuildRequires:  pkgconfig(libtzplatform-config)
 
 %description
 Bluetooth File Share Agent
@@ -65,63 +65,8 @@ make
 
 %install
 %make_install
-mkdir -p  %{buildroot}%{_optdir}/share/bt-ftp
-
-%post
-# For the FTP server folder
-if  [ ! -e /opt/share/bt-ftp ]
-then
-	mkdir -p  /opt/share/bt-ftp
-fi
-
-if  [ ! -e /opt/share/bt-ftp/Media ]
-then
-	ln -s /opt/usr/media /opt/share/bt-ftp/Media
-fi
-
-if  [ ! -e /opt/share/bt-ftp/SD_External ]
-then
-	ln -s /opt/storage/sdcard /opt/share/bt-ftp/SD_External
-fi
-
-if [ ! -f /opt/usr/dbspace/.bluetooth_trasnfer.db ]
-then
-	sqlite3 /opt/usr/dbspace/.bluetooth_trasnfer.db 'PRAGMA journal_mode = PERSIST;
-        create table if not exists inbound (
-		id INTEGER PRIMARY KEY autoincrement,
-		sid INTEGER,
-		tr_status INTEGER,
-		file_path TEXT,
-		dev_name TEXT,
-		timestamp INTEGER default 0,
-		addr TEXT,
-		type TEXT,
-		content TEXT
-	);
-	create table if not exists outbound (
-		id INTEGER PRIMARY KEY autoincrement,
-		sid INTEGER,
-		tr_status INTEGER,
-		file_path TEXT,
-		dev_name TEXT,
-		timestamp INTEGER default 0,
-		addr TEXT,
-		type TEXT,
-		content TEXT
-	);
-	'
-fi
-
-chown :5000 /opt/usr/dbspace/.bluetooth_trasnfer.db
-chown :5000 /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
-chmod 660 /opt/usr/dbspace/.bluetooth_trasnfer.db
-chmod 660 /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
-
-if [ -f /usr/lib/rpm-plugins/msm.so ]
-then
-chsmack -a 'bt_share::db' /opt/usr/dbspace/.bluetooth_trasnfer.db
-chsmack -a 'bt_share::db' /opt/usr/dbspace/.bluetooth_trasnfer.db-journal
-fi
+mkdir -p  %{buildroot}%{TZ_SYS_SHARE}/bt-ftp
+install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/ressources/init_db.sh
 
 %post -n libbluetooth-share-devel -p /sbin/ldconfig
 
@@ -133,11 +78,12 @@ fi
 
 %files
 %manifest %{name}.manifest
-/opt/etc/smack/accesses.d/bluetooth-share.rule
+%{TZ_SYS_ETC}/smack/accesses.d/bluetooth-share.rule
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
 %{_datadir}/dbus-1/system-services/org.bluetooth.share.service
-%{_optdir}/share/bt-ftp
+%{TZ_SYS_SHARE}/bt-ftp
+%{TZ_SYS_SHARE}/%{name}
 
 %files -n libbluetooth-share
 %manifest libbluetooth-share.manifest
@@ -147,6 +93,6 @@ fi
 %files -n libbluetooth-share-devel
 %manifest libbluetooth-share-devel.manifest
 %defattr(-, root, root)
-/usr/include/bluetooth-share-api/bluetooth-share-api.h
+%{_includedir}/bluetooth-share-api/bluetooth-share-api.h
 %{_libdir}/libbluetooth-share-api.so
 %{_libdir}/pkgconfig/bluetooth-share-api.pc

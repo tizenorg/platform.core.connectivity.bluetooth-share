@@ -31,6 +31,9 @@
 #include <notification.h>
 #include <media_content.h>
 
+/* For multi-user support */
+#include <tzplatform_config.h>
+
 #include "applog.h"
 #include "bluetooth-api.h"
 #include "obex-event-handler.h"
