@@ -60,7 +60,8 @@ cp %{SOURCE1001} %{SOURCE1002} %{SOURCE1003} .
 export CFLAGS+=" -fpie -fvisibility=hidden"
 export LDFLAGS+=" -Wl,--rpath=/usr/%{_libdir} -Wl,--as-needed -Wl,--unresolved-symbols=ignore-in-shared-libs -pie"
 
-%cmake .
+%cmake . \
+	-DTZ_SYS_ETC=%{TZ_SYS_ETC}
 make
 
 %install
@@ -78,7 +79,7 @@ install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/ressources/
 
 %files
 %manifest %{name}.manifest
-%{TZ_SYS_ETC}/smack/accesses.d/bluetooth-share.rule
+%config %{TZ_SYS_ETC}/smack/accesses.d/bluetooth-share.rule
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
 %{_datadir}/dbus-1/system-services/org.bluetooth.share.service
