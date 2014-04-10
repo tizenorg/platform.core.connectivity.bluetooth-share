@@ -303,7 +303,7 @@ int main(void)
 		return -1;
 
 	/* Set the uid / gid to 5000 */
-	if (set_app_privilege("com.samsung.bluetooth-share", NULL, NULL) !=
+	if (perm_app_set_privilege("com.samsung.bluetooth-share", NULL, NULL) !=
 							PC_OPERATION_SUCCESS)
 		ERR("Failed to set app privilege.\n");
 
