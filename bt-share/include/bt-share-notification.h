@@ -26,12 +26,13 @@ extern "C" {
 
 #include <glib.h>
 #include <notification.h>
+#include <tzplatform_config.h>
 
 #include "bt-share-main.h"
 
-#define BT_SHARE_BIN_PATH "/usr/bin/bluetooth-share"
+#define BT_SHARE_BIN_PATH tzplatform_mkpath(TZ_SYS_BIN, "bluetooth-share")
 
-#define QP_NO_APP_LAUNCH 	NOTIFICATION_PROP_DISABLE_APP_LAUNCH
+#define QP_NO_APP_LAUNCH	NOTIFICATION_PROP_DISABLE_APP_LAUNCH
 #define QP_NO_TICKER		NOTIFICATION_PROP_DISABLE_TICKERNOTI
 #define QP_NO_DELETE		(NOTIFICATION_PROP_DISABLE_AUTO_DELETE | NOTIFICATION_PROP_VOLATILE_DISPLAY)
 

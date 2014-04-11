@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include <libintl.h>
+#include <tzplatform_config.h>
 
 /*==============  String ================= */
 #define BT_COMMON_PKG		"ug-setting-bluetooth-efl"
@@ -48,12 +49,16 @@ extern "C" {
 	dgettext(BT_COMMON_PKG, "IDS_BT_BODY_BLUETOOTH_AVAILABLE")
 
 /*==============  Image ================= */
-#define ICONDIR	"/opt/apps/org.tizen.bluetooth-share-ui/res/images"
+#define ICONDIR		"org.tizen.bluetooth-share-ui/res/images"
+
 #define BT_ICON_PATH_MAX	256
 
-#define BT_ICON_QP_SEND		ICONDIR"/Q02_icon_BT_transmit.png"
-#define BT_ICON_QP_RECEIVE	ICONDIR"/Q02_icon_BT_receive.png"
-#define BT_ICON_QP_BT_ON		ICONDIR"/Q02_Notification_bluetooth.png"
+#define BT_ICON_QP_SEND		tzplatform_mkpath3(TZ_SYS_RW_APP, ICONDIR, \
+							"/Q02_icon_BT_transmit.png")
+#define BT_ICON_QP_RECEIVE	tzplatform_mkpath3(TZ_SYS_RW_APP, ICONDIR, \
+							"/Q02_icon_BT_receive.png")
+#define BT_ICON_QP_BT_ON	tzplatform_mkpath3(TZ_SYS_RW_APP, ICONDIR, \
+							"/Q02_Notification_bluetooth.png")
 
 
 #ifdef __cplusplus
