@@ -1,4 +1,6 @@
+/etc/tizen-platform.conf
+
 [D-BUS Service]
 Name=org.bluetooth.share
-Exec=/usr/bin/bluetooth-share
+Exec=${TZ_SYS_BIN}/bluetooth-share
 User=root
