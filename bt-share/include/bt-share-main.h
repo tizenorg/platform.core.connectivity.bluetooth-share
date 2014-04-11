@@ -27,13 +27,15 @@ extern "C" {
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 #include <notification.h>
+#include <tzplatform_config.h>
 
 #ifndef PACKAGE_NAME
 #define PACKAGE_NAME "bluetooth-share"
 #endif
 
 #define UI_PACKAGE "org.tizen.bluetooth-share-ui"
-#define UI_PKG_PATH "/opt/apps/org.tizen.bluetooth-share-ui/bin/bluetooth-share-ui"
+#define UI_PKG_PATH tzplatform_mkpath(TZ_SYS_RW_APP, \
+		"org.tizen.bluetooth-share-ui/bin/bluetooth-share-ui")
 
 typedef void (*bt_app_cb) (void *, void *, void *);
 
