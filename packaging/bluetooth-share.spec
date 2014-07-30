@@ -79,7 +79,6 @@ install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/ressources/
 
 %files
 %manifest %{name}.manifest
-%config %{TZ_SYS_ETC}/smack/accesses.d/bluetooth-share.rule
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
 %{_datadir}/dbus-1/system-services/org.bluetooth.share.service
