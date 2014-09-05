@@ -26,6 +26,7 @@
 #include <db-util.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>
