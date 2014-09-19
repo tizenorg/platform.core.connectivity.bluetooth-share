@@ -20,7 +20,6 @@
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syspopup_caller.h>
 #include "applog.h"
 #include "bluetooth-api.h"
 #include "bt-share-syspopup.h"
@@ -35,28 +34,15 @@ extern struct bt_appdata *app_state;
 
 static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 {
-	int ret = 0;
-	struct bt_appdata *ad = app_state;
-	bundle *b = (bundle *) user_data;
-
-	if (NULL == b) {
+	if (NULL == (void *)user_data) {
 		ERR("There is some problem with the user data..popup can not be created\n");
 		return FALSE;
 	}
 
-	ad->syspopup_call++;
+	INFO("bt system popup timer cb notification");
 
-	ret = syspopup_launch("bt-syspopup", b);
-	if (0 > ret) {
-		ERR("launching sys-popup failed\n");
-		if (ad->syspopup_call < BT_SYSPOPUP_MAX_CALL) {
-			return TRUE;
-		}
-	}
+	// TODO : display a popup
 
-	ad->syspopup_call = 0;
-
-	bundle_free(b);
 	return FALSE;
 }
 
@@ -65,23 +51,12 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 			    void *cb,
 			    void *data)
 {
-	int ret = 0;
-	bundle *b = NULL;
 	char event_str[BT_SYSPOPUP_EVENT_LEN_MAX] = { 0 };
 	struct bt_appdata *ad = app_state;
 
 	DBG("+\n");
 	if(cb == NULL)
 		return -1;
-
-	b = bundle_create();
-	if(b == NULL)
-		return -1;
-
-	bundle_add(b, "title", popup_params->title);
-	bundle_add(b, "type", popup_params->type);
-	bundle_add(b, "file", popup_params->file);
-	bundle_add(b, "device_name", popup_params->device_name);
 
 	switch (event_type) {
 	case BT_APP_EVENT_CONFIRM_MODE_REQUEST:
@@ -100,25 +75,11 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 		break;
 	}
 
-	bundle_add(b, "event-type", event_str);
-
-	/*The system popup launch function is not able to launch second popup
-	  * if first popup is being processed still, this due to the check
-	  * in AUL module to restrict multiple launching of syspopup,
-	  * to solve this problem after discussion it is decided that  if
-	  * the popup launch fails then it will be retried
-	  * after small timeout. */
-
 	ad->syspopup_call = 0;
 
-	ret = syspopup_launch("bt-syspopup", b);
-	if (0 > ret) {
-		ERR("Popup launch failed...retry = %d\n", ret);
-		g_timeout_add(BT_POPUP_SYSPOPUP_TIMEOUT_FOR_MULTIPLE_POPUPS,
-			      (GSourceFunc) __bt_system_popup_timer_cb, b);
-	} else {
-		bundle_free(b);
-	}
+	INFO("bt_launch_system_popup");
+
+	// TODO : display a popup
 
 	ad->popups.popup_cb = (bt_app_cb) cb;
 	ad->popups.popup_cb_data = data;

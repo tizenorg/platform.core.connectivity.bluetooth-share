@@ -26,7 +26,6 @@
 #include <string.h>
 #include <notification.h>
 #include <sysman.h>
-#include <aul.h>
 #include <vconf.h>
 
 #include "applog.h"
@@ -398,7 +397,6 @@ void _bt_create_warning_popup(int error_type)
 	/* Otherwise create the process and terminate it after popup shown */
 	if (sysman_get_pid(UI_PKG_PATH) == -1) {
 		char str[BT_TEXT_LEN_MAX] = {0,};
-		bundle *b;
 
 		switch(error_type) {
 		case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
@@ -412,15 +410,9 @@ void _bt_create_warning_popup(int error_type)
 			return;
 		}
 
-		b = bundle_create();
-		ret_if(b == NULL);
+		INFO("bt create warning popup notification");
+		// TODO : display a popup
 
-		bundle_add(b, "launch-type", "warning_popup");
-		bundle_add(b, "message", str);
-
-		aul_launch_app(UI_PACKAGE, b);
-
-		bundle_free(b);
 	}else {
 		DBusMessage *msg = NULL;
 		ret_if(dbus_connection == NULL);

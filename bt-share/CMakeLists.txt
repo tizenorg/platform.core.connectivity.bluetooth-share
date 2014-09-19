@@ -17,8 +17,8 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/lib)
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
-				aul dbus-glib-1 appcore-common
-				dlog vconf syspopup-caller pmapi sysman
+				dbus-glib-1 appcore-common
+				dlog vconf pmapi sysman
 				notification calendar-service2 contacts-service2
 				appsvc appcore-efl libprivilege-control
 				capi-content-media-content
