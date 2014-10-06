@@ -28,29 +28,19 @@
 #include "obex-event-handler.h"
 
 extern struct bt_appdata *app_state;
-#define BT_POPUP_SYSPOPUP_TIMEOUT_FOR_MULTIPLE_POPUPS 200
 #define BT_SYSPOPUP_EVENT_LEN_MAX 50
-#define BT_SYSPOPUP_MAX_CALL 10
 
-static gboolean __bt_system_popup_timer_cb(gpointer user_data)
-{
-	if (NULL == (void *)user_data) {
-		ERR("There is some problem with the user data..popup can not be created\n");
-		return FALSE;
-	}
-
-	INFO("bt system popup timer cb notification");
-
-	// TODO : display a popup
-
-	return FALSE;
-}
 
 int _bt_launch_system_popup(bt_app_event_type_t event_type,
 			    bt_app_sys_popup_params_t *popup_params,
 			    void *cb,
 			    void *data)
 {
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+	char *body = NULL;
+	notification_h noti = NULL;
+	bundle *b = NULL;
+
 	char event_str[BT_SYSPOPUP_EVENT_LEN_MAX] = { 0 };
 	struct bt_appdata *ad = app_state;
 
@@ -58,28 +48,90 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 	if(cb == NULL)
 		return -1;
 
-	switch (event_type) {
-	case BT_APP_EVENT_CONFIRM_MODE_REQUEST:
-		strncpy(event_str, "app-confirm-request", sizeof(event_str));
-		break;
-	case BT_APP_EVENT_FILE_RECEIVED:
-		strncpy(event_str, "file-received", sizeof(event_str));
-		break;
-	case BT_APP_EVENT_INFORMATION:
-		strncpy(event_str, "bt-information", sizeof(event_str));
-		break;
-	case BT_APP_EVENT_OVERWRITE_REQUEST:
-		strncpy(event_str, "confirm-overwrite-request", sizeof(event_str));
-		break;
-	default:
-		break;
-	}
+	b = bundle_create();
+	if(b == NULL)
+		return -1;
+
 
 	ad->syspopup_call = 0;
 
 	INFO("bt_launch_system_popup");
 
-	// TODO : display a popup
+	noti = notification_create(NOTIFICATION_TYPE_NOTI);
+	if (noti == NULL) {
+		ERR("Failed to create notification \n");
+		return -1;
+	}
+
+	err = notification_set_pkgname(noti, BT_SHARE_APP_NAME);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		ERR("Unable to set pkgname \n");
+		return -1;
+	}
+
+	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, "%s", popup_params->title, NOTIFICATION_VARIABLE_TYPE_NONE);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		ERR("Unable to set notification title \n");
+		return -1;
+	}
+
+	switch (event_type) {
+	case BT_APP_EVENT_CONFIRM_MODE_REQUEST:
+		strncpy(event_str, "app-confirm-request", sizeof(event_str));
+		err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, event_str, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set notification event str \n");
+			return -1;
+		}
+		break;
+	case BT_APP_EVENT_FILE_RECEIVED:
+		strncpy(event_str, "file-received", sizeof(event_str));
+		body = g_strdup_printf("File %s is received from %s", popup_params->file, popup_params->device_name);
+		err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, body, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set notification event str \n");
+			return -1;
+		}
+		g_free(body);
+		break;
+	case BT_APP_EVENT_INFORMATION:
+		strncpy(event_str, "bt-information", sizeof(event_str));
+		body = g_strdup_printf("BT information");
+		err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, body, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set notification event str \n");
+			return -1;
+		}
+		break;
+	case BT_APP_EVENT_OVERWRITE_REQUEST:
+		strncpy(event_str, "confirm-overwrite-request", sizeof(event_str));
+		body = g_strdup_printf("Confirm %s file overwrite", popup_params->file);
+		err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, body, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set notification event str \n");
+			return -1;
+		}
+		g_free(body);
+		break;
+	default:
+		break;
+	}
+
+	bundle_add(b, "event-type", event_str);
+	/*
+	* Pass the full bundle to the notification
+	*/
+	err  = notification_set_execute_option(noti, NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, NULL, NULL, b);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		ERR("Unable to set notification execute_option");
+		return -1;
+	}
+
+	err = notification_insert(noti, NULL);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		ERR("Unable to insert notification \n");
+		return -1;
+	}
 
 	ad->popups.popup_cb = (bt_app_cb) cb;
 	ad->popups.popup_cb_data = data;

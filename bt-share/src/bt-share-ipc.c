@@ -393,6 +393,9 @@ void _bt_send_message_to_ui(int transfer_id, char *name, int percentage, gboolea
 
 void _bt_create_warning_popup(int error_type)
 {
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+	notification_h noti = NULL;
+
 	/* If bluetooth-share-ui process is existed, send dbus signal. */
 	/* Otherwise create the process and terminate it after popup shown */
 	if (sysman_get_pid(UI_PKG_PATH) == -1) {
@@ -411,7 +414,36 @@ void _bt_create_warning_popup(int error_type)
 		}
 
 		INFO("bt create warning popup notification");
-		// TODO : display a popup
+
+		noti = notification_create(NOTIFICATION_TYPE_NOTI);
+		if (noti == NULL) {
+			ERR("Failed to create notification \n");
+			return;
+		}
+
+		err = notification_set_pkgname(noti, BT_SHARE_APP_NAME);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set pkgname \n");
+			return FALSE;
+		}
+
+		err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, "warning_popup", NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set notification warning popup \n");
+			return;
+		}
+
+		err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, str, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to set notification event str \n");
+			return;
+		}
+
+		err = notification_insert(noti, NULL);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			ERR("Unable to insert notification \n");
+			return;
+		}
 
 	}else {
 		DBusMessage *msg = NULL;
