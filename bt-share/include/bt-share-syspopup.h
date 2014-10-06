@@ -30,6 +30,8 @@ extern "C" {
 		(BT_GLOBALIZATION_STR_LENGTH + BT_FILE_NAME_LEN_MAX)
 
 
+#define BT_SHARE_APP_NAME "bt-share"
+
 /* This value are used in the N-prj */
 #define BT_APP_MSGBOX_TIMEOUT 3
 #define BT_APP_AUTHENTICATION_TIMEOUT 35

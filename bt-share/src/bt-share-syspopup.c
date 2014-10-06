@@ -32,8 +32,11 @@ extern struct bt_appdata *app_state;
 #define BT_SYSPOPUP_EVENT_LEN_MAX 50
 #define BT_SYSPOPUP_MAX_CALL 10
 
+
 static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 {
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+
 	if (NULL == (void *)user_data) {
 		ERR("There is some problem with the user data..popup can not be created\n");
 		return FALSE;
@@ -43,6 +46,32 @@ static gboolean __bt_system_popup_timer_cb(gpointer user_data)
 
 	// TODO : display a popup
 
+	notification_h noti = NULL;
+
+        noti = notification_create(NOTIFICATION_TYPE_NOTI);
+    	if (noti == NULL) {
+        	ERR("Failed to create notification \n");
+        	return FALSE;
+    	}
+
+        err = notification_set_pkgname(noti, BT_SHARE_APP_NAME);
+    	if (err != NOTIFICATION_ERROR_NONE) {
+        	ERR("Unable to set pkgname \n");
+        	return FALSE;
+    	}
+
+    	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, "bt-syspopup", NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+    	if (err != NOTIFICATION_ERROR_NONE) {
+        	ERR("Unable to set notification title \n");
+        	return;
+    	}
+
+        err = notification_insert(noti, NULL);
+    	if (err != NOTIFICATION_ERROR_NONE) {
+        	ERR("Unable to insert notification \n");
+        	return;
+    	}
+
 	return FALSE;
 }
 
@@ -51,6 +80,9 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 			    void *cb,
 			    void *data)
 {
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+    	char *body = NULL;
+
 	char event_str[BT_SYSPOPUP_EVENT_LEN_MAX] = { 0 };
 	struct bt_appdata *ad = app_state;
 
@@ -80,6 +112,34 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 	INFO("bt_launch_system_popup");
 
 	// TODO : display a popup
+
+	notification_h noti = NULL;
+
+        noti = notification_create(NOTIFICATION_TYPE_NOTI);
+    	if (noti == NULL) {
+        	ERR("Failed to create notification \n");
+        	return FALSE;
+    	}
+
+        err = notification_set_pkgname(noti, BT_SHARE_APP_NAME);
+    	if (err != NOTIFICATION_ERROR_NONE) {
+        	ERR("Unable to set pkgname \n");
+        	return FALSE;
+    	}
+
+        body = g_strdup_printf("title %s type %s file %s device_name %s event %s", popup_params->title, popup_params->type, popup_params->file, popup_params->device_name, event_str);
+    	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, body, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+    	if (err != NOTIFICATION_ERROR_NONE) {
+        	ERR("Unable to set notification event str \n");
+        	return;
+    	}
+	g_free(body);
+
+        err = notification_insert(noti, NULL);
+    	if (err != NOTIFICATION_ERROR_NONE) {
+        	ERR("Unable to insert notification \n");
+        	return;
+    	}
 
 	ad->popups.popup_cb = (bt_app_cb) cb;
 	ad->popups.popup_cb_data = data;
