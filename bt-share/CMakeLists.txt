@@ -19,12 +19,14 @@ INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
 				dbus-glib-1 appcore-common
 				dlog vconf pmapi sysman
-				notification calendar-service2 contacts-service2
+				notification
 				appsvc appcore-efl libprivilege-control
 				capi-content-media-content
 				libtzplatform-config)
+pkg_check_modules(CALENDAR_SERVICE2 calendar-service2)
+pkg_check_modules(CONTACTS_SERVICE2 contacts-service2)
 
-FOREACH(flag ${pkgs_CFLAGS})
+FOREACH(flag ${pkgs_CFLAGS} ${CALENDAR_SERVICE2_CFLAGS} ${CONTACTS_SERVICE2_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
 ENDFOREACH(flag)
 #SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -finstrument-functions")
@@ -40,9 +42,15 @@ ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DFACTORYFS=\"$ENV{FACTORYFS}\"")
 ADD_DEFINITIONS("-DTARGET")
 ADD_DEFINITIONS("-DSLP_DEBUG")
+if(CALENDAR_SERVICE2_FOUND)
+  ADD_DEFINITIONS("-DENABLE_CALENDAR_SERVICE2")
+endif(CALENDAR_SERVICE2_FOUND)
+if(CONTACTS_SERVICE2_FOUND)
+  ADD_DEFINITIONS("-DENABLE_CONTACTS_SERVICE2")
+endif(CONTACTS_SERVICE2_FOUND)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} -L${CMAKE_CURRENT_SOURCE_DIR}/../lib -lbluetooth-share-api)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${CALENDAR_SERVICE2_LDFLAGS} ${CONTACTS_SERVICE2_LDFLAGS} -L${CMAKE_CURRENT_SOURCE_DIR}/../lib -lbluetooth-share-api)
 
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)

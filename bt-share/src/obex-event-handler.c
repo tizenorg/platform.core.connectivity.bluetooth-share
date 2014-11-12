@@ -23,8 +23,12 @@
 #include <string.h>
 #include <glib.h>
 #include <vconf-keys.h>
+#ifdef ENABLE_CALENDAR_SERVICE2
 #include <calendar2.h>
+#endif
+#ifdef ENABLE_CONTACTS_SERVICE2
 #include <contacts.h>
+#endif
 #include <vconf.h>
 #include <Ecore_File.h>
 #include <bluetooth-share-api.h>
@@ -719,6 +723,7 @@ static bt_file_type_t __get_file_type(char *extn)
 	return BT_FILE_OTHER;
 }
 
+#ifdef ENABLE_CONTACTS_SERVICE2
 static bool __bt_vcard_handler(contacts_record_h record, void *user_data)
 {
 	int ret;
@@ -730,7 +735,9 @@ static bool __bt_vcard_handler(contacts_record_h record, void *user_data)
 
 	return true;
 }
+#endif /* ENABLE_CONTACTS_SERVICE2 */
 
+#ifdef ENABLE_CALENDAR_SERVICE2
 static bool __bt_vcalendar_handler(calendar_record_h record, void *user_data)
 {
 	int ret;
@@ -742,6 +749,7 @@ static bool __bt_vcalendar_handler(calendar_record_h record, void *user_data)
 
 	return true;
 }
+#endif /* ENABLE_CALENDAR_SERVICE2 */
 
 static gboolean __bt_save_v_object(char *file_path,
 					    bt_file_type_t file_type)
@@ -752,6 +760,7 @@ static gboolean __bt_save_v_object(char *file_path,
 	DBG("file_path = %s, file_type = %d\n", file_path, file_type);
 
 	switch (file_type) {
+#ifdef ENABLE_CONTACTS_SERVICE2
 	case BT_FILE_VCARD:
 		ret = contacts_connect2();
 		if (ret != CONTACTS_ERROR_NONE) {
@@ -776,7 +785,9 @@ static gboolean __bt_save_v_object(char *file_path,
 			return FALSE;
 		}
 		break;
+#endif /* ENABLE_CONTACTS_SERVICE2 */
 
+#ifdef ENABLE_CALENDAR_SERVICE2
 	case BT_FILE_VCAL:
 		ret = calendar_connect();
 		if (ret != CALENDAR_ERROR_NONE) {
@@ -800,6 +811,7 @@ static gboolean __bt_save_v_object(char *file_path,
 			return FALSE;
 		}
 		break;
+#endif /* ENABLE_CALENDAR_SERVICE2 */
 
 	default:
 		break;
