@@ -9,7 +9,6 @@ Source1001: %{name}.manifest
 Source1002: libbluetooth-share.manifest
 Source1003: libbluetooth-share-devel.manifest
 Source1004: init_db.sh
-Requires(post): vconf
 Requires(post): coreutils
 Requires(post): sqlite
 Requires(post): smack
