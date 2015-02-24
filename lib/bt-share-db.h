@@ -1,13 +1,17 @@
 /*
- * bluetooth-share-api
+ *  bluetooth-share-api
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,12 +28,10 @@
 extern "C" {
 #endif
 
-#define BT_TRANSFER_DB		tzplatform_mkpath(TZ_USER_DB, ".bluetooth_transfer.db")
+#define BT_TRANSFER_DB		"/opt/usr/dbspace/.bluetooth_trasnfer.db"
 #define BT_INBOUND_TABLE	"inbound"
 #define BT_OUTBOUND_TABLE	"outbound"
 #define BT_DB_QUERY_LEN		512
-
-#define SCRIPT_INIT_DB		tzplatform_mkpath(TZ_SYS_SHARE, "bluetooth-share/resources/init_db.sh")
 
 #define TABLE(type) ((type == BT_DB_INBOUND) ? BT_INBOUND_TABLE : BT_OUTBOUND_TABLE)
 #define TEXT(s, n) (char *)sqlite3_column_text(s, n)

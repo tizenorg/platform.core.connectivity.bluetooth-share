@@ -1,13 +1,17 @@
 /*
- * bluetooth-share
+ *  bluetooth-share
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +31,7 @@ extern "C" {
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-
+#include "bluetooth-api.h"
 #include "bt-share-main.h"
 
 #define BT_ADDRESS_LENGTH_MAX 6
@@ -37,6 +41,7 @@ extern "C" {
 #define BT_UG_IPC_EVENT_CONNECTED "Connected"
 #define BT_UG_IPC_EVENT_DISCONNECTED	"Disconnected"
 
+#define BT_BLUEZ_INTERFACE "org.freedesktop.DBus"
 #define BT_SYSPOPUP_IPC_RESPONSE_OBJECT "/org/projectx/bt_syspopup_res"
 #define BT_SYSPOPUP_INTERFACE "User.Bluetooth.syspopup"
 #define BT_SYSPOPUP_METHOD_RESPONSE "Response"
@@ -62,8 +67,7 @@ extern "C" {
 
 #define BT_IPC_STRING_SIZE 256
 #define BT_ADDR_STR_LEN_MAX	18
-
-#define FILE_PATH_DELIM "?"
+#define BT_MIME_TYPE_MAX_LEN	20
 
 #define BT_INBOUND_TABLE	"inbound"
 #define BT_OUTBOUND_TABLE	"outbound"
@@ -107,7 +111,8 @@ typedef struct {
 	char *mode;
 	char **file_path;
 	char **content;
-	char *type;
+	char **type;
+	unsigned int *size;
 } opc_transfer_info_t;
 
 typedef struct {
@@ -140,21 +145,16 @@ gboolean _bt_init_dbus_signal(void);
 void _free_transfer_info(opc_transfer_info_t *node);
 void _remove_transfer_info(opc_transfer_info_t *node);
 int _request_file_send(opc_transfer_info_t *node);
-void _bt_send_message_to_ui(int transfer_id,
-			    char *name,
-			    int percentage,
-			    gboolean completed,
-			    int error_type);
-void _bt_create_warning_popup(int error_type);
-void _bt_update_transfer_list_view(const char *table);
+void _bt_create_warning_popup(int error_type, char *msg);
 
 gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status);
 
 void _bt_rm_all_send_data(void);
 void _bt_rm_all_recv_data(void);
+void _bt_update_transfer_list_view(char *db);
 gboolean _bt_add_recv_transfer_status_data(char *device_name,
-					   char *filepath,
-					   int status);
+			char *filepath, char *type,
+			unsigned int size, int status);
 
 #ifdef __cplusplus
 }

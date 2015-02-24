@@ -1,13 +1,17 @@
 /*
- * bluetooth-share
+ *  bluetooth-share
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,7 +44,7 @@ typedef enum {
 	BT_FILE_OTHER	/**<OTHER*/
 } bt_file_type_t;
 
-int _bt_get_transfer_id_by_noti_id(int noti_id);
+bt_obex_server_authorize_into_t server_auth_info;
 
 void _bt_clear_receive_noti_list(void);
 
@@ -51,10 +55,8 @@ void _bt_obex_server_event_handler(int event,
 				       bluetooth_event_param_t *param,
 				       void *user_data);
 
-void _bt_app_obex_download_dup_file_cb(void *data, void *obj,
-				       void *event_info);
-
 void _bt_get_default_storage(char *storage);
+void _bt_obex_cancel_transfer(void *data);
 
 
 #ifdef __cplusplus

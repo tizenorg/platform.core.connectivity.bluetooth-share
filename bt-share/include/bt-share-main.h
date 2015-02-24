@@ -1,13 +1,17 @@
 /*
- * bluetooth-share
+ *  bluetooth-share
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +40,6 @@ extern "C" {
 #define UI_PACKAGE "org.tizen.bluetooth-share-ui"
 #define UI_PKG_PATH tzplatform_mkpath(TZ_SYS_RW_APP, \
 		"org.tizen.bluetooth-share-ui/bin/bluetooth-share-ui")
-
 typedef void (*bt_app_cb) (void *, void *, void *);
 
 typedef struct {
@@ -60,17 +63,19 @@ struct bt_appdata {
 	notification_h send_noti;
 	notification_h receive_noti;
 	notification_h opc_noti;
+	int send_noti_id;
+	int receive_noti_id;
 	int opc_noti_id;
 	int syspopup_call;
 	DBusGConnection *conn;
 	GObject *object;
 	gboolean obex_server_init;
+	gboolean opp_transfer_abort;
 };
 
-
-void _bt_terminate_app(void);
-
 int _bt_init_obex_server(void);
+
+void _bt_terminate_bluetooth_share(void);
 
 #ifdef __cplusplus
 }

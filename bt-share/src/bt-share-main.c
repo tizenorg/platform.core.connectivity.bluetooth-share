@@ -1,13 +1,17 @@
 /*
- * bluetooth-share
+ *  bluetooth-share
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,10 +27,6 @@
 #include <appcore-efl.h>
 #include <privilege-control.h>
 #include <vconf.h>
-
-/* For multi-user support */
-#include <tzplatform_config.h>
-
 #include "applog.h"
 #include "bt-share-main.h"
 #include "bluetooth-api.h"
@@ -46,14 +46,24 @@ static gboolean terminated;
 GMainLoop *main_loop = NULL;
 struct bt_appdata *app_state = NULL;
 
+void _bt_terminate_bluetooth_share(void)
+{
+	DBG("+");
+
+	if (main_loop) {
+		g_main_loop_quit(main_loop);
+	} else {
+		terminated = TRUE;
+	}
+	DBG("-");
+}
+
 static void __bt_release_service(struct bt_appdata *ad)
 {
 	if (ad == NULL)
 		return;
 
 	_bt_deinit_vconf_notification();
-	_bt_delete_notification(ad->send_noti);
-	_bt_delete_notification(ad->receive_noti);
 	_bt_delete_notification(ad->opc_noti);
 	_bt_clear_receive_noti_list();
 	ad->send_noti = NULL;
@@ -63,6 +73,9 @@ static void __bt_release_service(struct bt_appdata *ad)
 	bluetooth_opc_deinit();
 	bluetooth_obex_server_deinit();
 	_bt_unregister_notification_cb(ad);
+
+	g_free(server_auth_info.filename);
+	server_auth_info.filename = NULL;
 
 	DBG("Terminating bluetooth-share daemon");
 }
@@ -80,15 +93,21 @@ static void __bt_sigterm_handler(int signo)
 	DBG("-");
 }
 
-static void __bt_update_notification_status_values()
+static void __bt_update_transfer_status_values(void)
 {
 	struct bt_appdata *ad = app_state;
 	GSList *tr_data_list = NULL;
 	GSList *list_iter = NULL;
 	bt_tr_data_t *info = NULL;;
-	char str[NOTIFICATION_TEXT_LEN_MAX] = { 0 };
-	notification_h noti = NULL;
 	sqlite3 *db = NULL;
+
+	/* Update notification status durning BT off */
+	if (_bt_update_notification_status(ad) == FALSE) {
+		DBG("Notification item is not existed.");
+		return;
+	}
+
+	DBG("Initialize transfer information");
 
 	db = bt_share_open_db();
 	if (!db)
@@ -114,25 +133,10 @@ static void __bt_update_notification_status_values()
 				info->tr_status = BT_TR_FAIL;
 				bt_share_update_tr_data(db, BT_DB_OUTBOUND, info->id, info);
 			} else {
-				ERR("Invalid status\n");
+				ERR("Invalid status");
 			}
 
 			list_iter = g_slist_next(list_iter);
-		}
-
-		if ((ad->send_data.tr_success + ad->send_data.tr_fail) != 0) {
-			snprintf(str, sizeof(str), BT_TR_STATUS,
-			ad->send_data.tr_success, ad->send_data.tr_fail);
-
-			noti = _bt_create_notification(BT_NOTI_T);
-			_bt_set_notification_app_launch(noti,
-				CREATE_TR_LIST,
-				NOTI_TR_TYPE_OUT, NULL, NULL);
-			_bt_set_notification_property(noti, QP_NO_DELETE | QP_NO_TICKER);
-			_bt_insert_notification(noti,
-				BT_STR_SENT, str,
-				BT_ICON_QP_SEND);
-			ad->send_noti = noti;
 		}
 
 		bt_share_release_tr_data_list(tr_data_list);
@@ -156,23 +160,6 @@ static void __bt_update_notification_status_values()
 
 			list_iter = g_slist_next(list_iter);
 		}
-
-		if ((ad->recv_data.tr_success + ad->recv_data.tr_fail) != 0) {
-
-			snprintf(str, sizeof(str), BT_TR_STATUS,
-				ad->recv_data.tr_success, ad->recv_data.tr_fail);
-			DBG("str = [%s] \n", str);
-
-			noti  = _bt_create_notification(BT_NOTI_T);
-			_bt_set_notification_app_launch(noti, CREATE_TR_LIST,
-				NOTI_TR_TYPE_IN, NULL, NULL);
-			_bt_set_notification_property(noti, QP_NO_DELETE | QP_NO_TICKER);
-			_bt_insert_notification(noti,
-				BT_STR_RECEIVED, str,
-				BT_ICON_QP_RECEIVE);
-			ad->receive_noti = noti;
-		}
-
 		bt_share_release_tr_data_list(tr_data_list);
 		tr_data_list = NULL;
 		list_iter = NULL;
@@ -180,44 +167,10 @@ static void __bt_update_notification_status_values()
 
 	bt_share_close_db(db);
 
+	DBG("[Send] success %d, fail %d", ad->send_data.tr_success, ad->send_data.tr_fail);
+	DBG("[Receive] success %d, fail %d", ad->recv_data.tr_success, ad->recv_data.tr_fail);
+
 	return;
-}
-
-static notification_h __bt_update_notification_adapter_status(void)
-{
-	notification_h noti;
-	notification_error_e ret;
-
-	noti  = _bt_create_notification(BT_NOTI_T);
-	if (!noti)
-		return NULL;
-
-	ret = notification_set_property(noti, QP_NO_DELETE | QP_NO_TICKER);
-	if (ret != NOTIFICATION_ERROR_NONE) {
-		goto failed;
-	}
-
-	ret = notification_set_application(noti, "ug-bluetooth-efl");
-	if (ret != NOTIFICATION_ERROR_NONE) {
-		goto failed;
-	}
-
-	ret = notification_set_display_applist(noti,
-			 NOTIFICATION_DISPLAY_APP_NOTIFICATION_TRAY);
-	if (ret != NOTIFICATION_ERROR_NONE) {
-		goto failed;
-	}
-
-	_bt_insert_notification(noti,
-			BT_STR_BLUETOOTH_ON, BT_STR_BLUETOOTH_AVAILABLE,
-			BT_ICON_QP_BT_ON);
-	return noti;
-
-failed:
-	ERR("Fail to register notification");
-	notification_free(noti);
-	return NULL;
-
 }
 
 static gboolean __bt_dbus_request_name(void)
@@ -247,7 +200,7 @@ static gboolean __bt_dbus_request_name(void)
 
 failed:
 	if (dbus_error_is_set(&err)) {
-		ERR("D-Bus Error: %s\n", err.message);
+		ERR("D-Bus Error: %s", err.message);
 		dbus_error_free(&err);
 	}
 
@@ -261,31 +214,25 @@ failed:
 int _bt_init_obex_server(void)
 {
 	char storage[STORAGE_PATH_LEN_MAX];
-
+#ifdef _TEMP_
 	_bt_get_default_storage(storage);
 	if (bluetooth_obex_server_init(storage) !=
 					BLUETOOTH_ERROR_NONE) {
-		DBG("Fail to init obex server");
+		ERR("Fail to init obex server");
 		return BT_SHARE_FAIL;
 	}
 
 	bluetooth_obex_server_set_root(BT_FTP_FOLDER);
+#endif
 
 	return BT_SHARE_ERROR_NONE;
-}
-
-void _bt_terminate_app(void)
-{
-	if (main_loop) {
-		g_main_loop_quit(main_loop);
-	}
 }
 
 int main(void)
 {
 	int ret;
 	struct bt_appdata ad;
-	DBG("Starting bluetooth-share daemon");
+	INFO("Starting bluetooth-share daemon");
 	memset(&ad, 0, sizeof(struct bt_appdata));
 	app_state = &ad;
 
@@ -294,29 +241,30 @@ int main(void)
 	g_type_init();
 
 	if (__bt_dbus_request_name() == FALSE) {
-		DBG("Aleady dbus instance existed\n");
+		INFO("Aleady dbus instance existed");
 		exit(0);
 	}
-
+#ifdef _TEMP_
 	/* init internationalization */
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
 
 	/* Set the uid / gid to 5000 */
-	if (perm_app_set_privilege("com.samsung.bluetooth-share", NULL, NULL) !=
+	if (perm_app_set_privilege("org.tizen.bluetooth-share", NULL, NULL) !=
 							PC_OPERATION_SUCCESS)
-		ERR("Failed to set app privilege.\n");
+		ERR("Failed to set app privilege");
 
 	bluetooth_register_callback(_bt_share_event_handler, NULL);
+#endif
 	ret = bluetooth_opc_init();
 	if (ret != BLUETOOTH_ERROR_NONE) {
-		ERR("bluetooth_opc_init failed!!\n");
+		ERR("bluetooth_opc_init failed");
 		return -1;
 	}
 
 	_bt_init_dbus_signal();
-	_bt_init_vconf_notification();
-	__bt_update_notification_status_values();
+	_bt_init_vconf_notification(&ad);
+	__bt_update_transfer_status_values();
 	_bt_register_notification_cb(&ad);
 
 	if (_bt_init_obex_server() == BT_SHARE_ERROR_NONE)
@@ -324,17 +272,15 @@ int main(void)
 
 	if (terminated == TRUE) {
 		__bt_release_service(&ad);
+		bluetooth_unregister_callback();
 		return -1;
 	}
-
-	notification_h noti;
-	noti = __bt_update_notification_adapter_status();
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(main_loop);
 
-	_bt_delete_notification(noti);
 	__bt_release_service(&ad);
+	bluetooth_unregister_callback();
 
 	return 0;
 }

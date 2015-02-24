@@ -1,13 +1,17 @@
 /*
- * bluetooth-share
+ *  bluetooth-share
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +21,7 @@
  *
  */
 
-#include <pmapi.h>
+#include <device/power.h>
 #include <glib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -38,13 +42,13 @@ int _bt_share_block_sleep(gboolean is_block)
 
 	if (is_block) {
 		if (block_sleep_count < 0) {
-			DBG("block_sleep_count[%d] is invalid. It is set to 0.\n",
+			INFO("block_sleep_count[%d] is invalid. It is set to 0.\n",
 				     block_sleep_count);
 			block_sleep_count = 0;
 		} else if (block_sleep_count == 0) {
-			result = pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
+			result = device_power_request_lock(POWER_LOCK_CPU, 0);
 			if (result != 0) {
-				DBG("LCD Lock is failed with result code [%d]\n", result);
+				INFO("LCD Lock is failed with result code [%d]\n", result);
 			}
 		} else {
 			result = 0;
@@ -55,13 +59,13 @@ int _bt_share_block_sleep(gboolean is_block)
 		}
 	} else {
 		if (block_sleep_count <= 0) {
-			DBG("block_sleep_count[%d] is invalid. It is set to 0.\n",
+			INFO("block_sleep_count[%d] is invalid. It is set to 0.\n",
 				     block_sleep_count);
 			block_sleep_count = 0;
 		} else if (block_sleep_count == 1) {
-			result = pm_unlock_state(LCD_OFF, PM_RESET_TIMER);
+			result = device_power_release_lock(POWER_LOCK_CPU);
 			if (result != 0) {
-				DBG("LCD Unlock is failed with result code [%d]\n",
+				INFO("LCD Unlock is failed with result code [%d]\n",
 					     result);
 			}
 		} else {
@@ -87,14 +91,14 @@ int _bt_set_transfer_indicator(gboolean state)
 
 	ret = vconf_get_int(VCONFKEY_BT_STATUS, (void *)&bt_device_state);
 	if (ret != 0) {
-		DBG("Get vconf failed\n");
+		ERR("Get vconf failed\n");
 		return -1;
 	}
 
 	if(state == TRUE) {
 		block_cnt++;
-		if(bt_device_state & BT_STATUS_TRANSFER)
-			return 0;
+		retv_if(bt_device_state & BT_STATUS_OFF, 0);
+		retv_if(bt_device_state & BT_STATUS_TRANSFER, 0);
 		bt_device_state |= BT_STATUS_TRANSFER;
 	} else {
 		if(block_cnt > 0)
@@ -106,7 +110,7 @@ int _bt_set_transfer_indicator(gboolean state)
 
 	ret = vconf_set_int(VCONFKEY_BT_STATUS, bt_device_state);
 	if (ret != 0) {
-		DBG("Set vconf failed\n");
+		ERR("Set vconf failed\n");
 		return -1;
 	}
 	return 0;
@@ -147,7 +151,15 @@ static char *__bt_share_get_transfer_file_name(int file_type)
 void _bt_remove_tmp_file(char *file_path)
 {
 	if (g_str_has_prefix(file_path, BT_TMP_FILE) == TRUE) {
-		DBG("Remove the file: %s", file_path);
+		DBG_SECURE("Remove the file: %s", file_path);
+		ecore_file_remove(file_path);
+	}
+}
+
+void _bt_remove_vcf_file(char *file_path)
+{
+	if (g_str_has_prefix(file_path, BT_CONTACT_SHARE_TMP_DIR) == TRUE) {
+		DBG_SECURE("Remove the file: %s", file_path);
 		ecore_file_remove(file_path);
 	}
 }
@@ -180,7 +192,7 @@ char *_bt_share_create_transfer_file(char *text)
 	fd = open(file, O_RDWR | O_CREAT, 0755);
 
 	if (fd < 0) {
-		ERR("Fail to open the file");
+		ERR("Fail to open the file : %s", file);
 		goto fail;
 	}
 
@@ -190,7 +202,7 @@ char *_bt_share_create_transfer_file(char *text)
 		content = g_strdup(text);
 	}
 
-	DBG("content: \n%s", content);
+	DBG_SECURE("content: \n%s", content);
 
 	write_size = write(fd, content, strlen(content));
 	g_free(content);

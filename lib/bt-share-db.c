@@ -1,13 +1,17 @@
 /*
- * bluetooth-share-api
+ *  bluetooth-share-api
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,49 +28,38 @@
 #include <fcntl.h>
 #include <sqlite3.h>
 #include <db-util.h>
-#include <errno.h>
-#include <unistd.h>
 #include <sys/stat.h>
-
-/* For multi-user support */
-#include <tzplatform_config.h>
-
 #include "applog.h"
 #include "bt-share-db.h"
 #include "bluetooth-share-api.h"
 
+
 static int __bt_exec_query(sqlite3 *db, char *query)
 {
 	int ret;
-	char *errmsg = NULL;
+	sqlite3_stmt *stmt = NULL;
 
 	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handler is null");
 	retvm_if(query == NULL, BT_SHARE_ERR_INVALID_PARAM, "Invalid param");
 
-	ret = sqlite3_exec(db, query, NULL, 0, &errmsg);
-	if (ret != SQLITE_OK) {
-		DBG("Query: [%s]", query);
-		ERR("SQL error: %s\n", errmsg);
-		sqlite3_free(errmsg);
+	ret = sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);
+	if (ret != SQLITE_OK)
 		return BT_SHARE_ERR_INTERNAL;
-	}
+
+	ret = sqlite3_step(stmt);
+	if (ret != SQLITE_DONE)
+		return BT_SHARE_ERR_INTERNAL;
+
+	sqlite3_finalize(stmt);
 
 	return BT_SHARE_ERR_NONE;
 }
+
 
 sqlite3 *__bt_db_open(void)
 {
 	int ret;
 	sqlite3 *db = NULL;
-	struct stat sts;
-
-	/* Check if the DB exists; if not, create it and initialize it */
-	ret = stat(BT_TRANSFER_DB, &sts);
-	if (ret == -1 && errno == ENOENT)
-	{
-		DBG("DB %s doesn't exist, it needs to be created and initialized", BT_TRANSFER_DB);
-		system(SCRIPT_INIT_DB);
-	}
 
 	ret = db_util_open(BT_TRANSFER_DB, &db, DB_UTIL_REGISTER_HOOK_METHOD);
 	if (ret) {
@@ -77,6 +70,7 @@ sqlite3 *__bt_db_open(void)
 
 	return db;
 }
+
 
 static int __bt_db_close(sqlite3 *db)
 {
@@ -102,17 +96,20 @@ static int __bt_db_insert_record(sqlite3 *db, int db_table, bt_tr_data_t *data)
 {
 	DBG("+\n");
 	int ret = 0;
-	char query[BT_DB_QUERY_LEN] = {0, };
+	char *query = NULL;
 	sqlite3_stmt *stmt = NULL;
 
 	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handler is null");
 	retvm_if(data == NULL, BT_SHARE_ERR_INTERNAL, "Insert data is null");
 
-	snprintf(query, BT_DB_QUERY_LEN,
-		"INSERT INTO %s (id, sid, tr_status, file_path, dev_name, timestamp, addr, type, content) VALUES(?, '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s');",
+	DBG("File: %s Type: %s, Size: %d",data->file_path, data->type, data->size);
+	query = sqlite3_mprintf("INSERT INTO %s (id, sid, tr_status, file_path, dev_name, timestamp, addr, type, content, size) VALUES(?, '%d', '%d', '%q', '%q', '%d', '%q', '%q', '%q', '%d');",
 		TABLE(db_table), data->sid, data->tr_status, data->file_path,
-		data->dev_name, data->timestamp, data->addr, data->type, data->content);
+		data->dev_name, data->timestamp, data->addr, data->type, data->file_path, data->size);
+	if (!query)
+		return BT_SHARE_ERR_INTERNAL;
 
+	DBG("query : %s", query);
 	ret = sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);
 	if (ret != SQLITE_OK)
 		goto error;
@@ -122,6 +119,7 @@ static int __bt_db_insert_record(sqlite3 *db, int db_table, bt_tr_data_t *data)
 		goto error;
 
 	sqlite3_finalize(stmt);
+	sqlite3_free(query);
 
 	DBG("-\n");
 	return BT_SHARE_ERR_NONE;
@@ -132,6 +130,8 @@ error:
 	if (stmt) {
 		sqlite3_finalize(stmt);
 	}
+
+	sqlite3_free(query);
 
 	return BT_SHARE_ERR_INTERNAL;
 }
@@ -193,8 +193,8 @@ static bt_tr_data_t *__bt_db_get_record_by_id(sqlite3 *db, int db_table, int id)
 		goto error;
 	}
 
-	DBG("%d, %d, %s, %s, %d, %s\n", data->sid, data->tr_status, data->file_path,
-			data->dev_name, data->timestamp, data->addr);
+	DBG_SECURE("%d, %d, %s, %s, %d, %s, %d\n", data->sid, data->tr_status, data->file_path,
+			data->dev_name, data->timestamp, data->addr, data->size);
 
 	sqlite3_finalize(stmt);
 
@@ -211,7 +211,7 @@ error:
 }
 
 
-static GSList *__bt_db_get_record_list(sqlite3 *db, const char*query)
+static GSList *__bt_db_get_record_list(sqlite3 *db, const char *query)
 {
 	int ret;
 	sqlite3_stmt *stmt = NULL;
@@ -240,6 +240,7 @@ static GSList *__bt_db_get_record_list(sqlite3 *db, const char*query)
 		data->addr = g_strdup(TEXT(stmt, idx++));
 		data->type = g_strdup(TEXT(stmt, idx++));
 		data->content = g_strdup(TEXT(stmt, idx++));
+		data->size = INT(stmt, idx++);
 
 		slist = g_slist_append(slist, data);
 
@@ -270,8 +271,10 @@ static unsigned int __bt_db_get_last_session_id(sqlite3 *db, int db_table)
 		goto error;
 
 	ret = sqlite3_step(stmt);
-	if (ret == SQLITE_ROW)
-		sid = INT(stmt, 1);  /* to get the session id */
+	if (ret == SQLITE_ROW) {
+		sid = INT(stmt, 2);  /* to get the session id */
+		DBG("session_id : %u");
+	}
 	else
 		goto error;
 
@@ -313,15 +316,14 @@ static int __bt_db_release_record_list(GSList *list)
 	return BT_SHARE_ERR_NONE;
 }
 
-static int __bt_db_get_record_count(sqlite3 *db, int db_table)
+static int __bt_db_get_record_count(sqlite3 *db, const char *query)
 {
-	char query[BT_DB_QUERY_LEN] = {0, };
 	sqlite3_stmt *stmt;
 	int idx;
 	int count = 0;
 	int ret = 0;
 
-	snprintf(query, sizeof(query), "SELECT COUNT(id) FROM %s;", TABLE(db_table));
+	DBG("query : %s", query);
 
 	ret = sqlite3_prepare(db, query, -1, &stmt, NULL);
 	if (ret != SQLITE_OK  || stmt == NULL) {
@@ -352,6 +354,8 @@ static int __bt_db_delete_record(sqlite3 *db, const char *query )
 	sqlite3_stmt *stmt = NULL;
 
 	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handler is null");
+
+	DBG("query : %s", query);
 
 	ret = sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);
 	if (ret != SQLITE_OK) {
@@ -466,7 +470,28 @@ EXPORT_API int bt_share_get_tr_data_count(sqlite3 *db, int db_table)
 {
 	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handle is NULL");
 
-	return __bt_db_get_record_count(db, db_table);
+	char query[BT_DB_QUERY_LEN] = {0, };
+	snprintf(query, sizeof(query), "SELECT COUNT(id) FROM %s;", TABLE(db_table));
+
+	return __bt_db_get_record_count(db, query);
+}
+
+EXPORT_API int bt_share_get_tr_result_count(sqlite3 *db, int db_table, int *success, int *fail)
+{
+	retvm_if(db == NULL, BT_SHARE_ERR_INTERNAL, "DB handle is NULL");
+	retvm_if(!success || !fail, BT_SHARE_ERR_INVALID_PARAM, "Invalid parameter");
+
+	 char query[BT_DB_QUERY_LEN] = {0, };
+
+	 snprintf(query, sizeof(query), "SELECT COUNT(tr_status) FROM %s WHERE tr_status=%d;",
+			TABLE(db_table), BT_TRANSFER_SUCCESS);
+	*success = __bt_db_get_record_count(db, query);
+
+	snprintf(query, sizeof(query), "SELECT COUNT(tr_status) FROM %s WHERE tr_status=%d;",
+			TABLE(db_table), BT_TRANSFER_FAIL);
+	*fail = __bt_db_get_record_count(db, query);
+
+	return BT_SHARE_ERR_NONE;
 }
 
 EXPORT_API int bt_share_remove_tr_data_by_id(sqlite3 *db, int db_table, int id)

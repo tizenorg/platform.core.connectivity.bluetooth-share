@@ -15,16 +15,29 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/lib)
 
+SET(PKG_MODULES
+	glib-2.0
+	bluetooth-api
+	aul
+	dbus-glib-1
+	appcore-common
+	dlog
+	vconf
+	capi-system-device
+	notification
+#	calendar-service2
+	appsvc
+	appcore-efl
+	libprivilege-control
+	capi-appfw-application
+	capi-content-media-content
+	storage
+	gio-2.0
+	gio-unix-2.0
+)
+
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
-				dbus-glib-1 appcore-common
-				dlog vconf pmapi sysman
-				notification
-				appsvc appcore-efl libprivilege-control
-				capi-content-media-content
-				libtzplatform-config)
-pkg_check_modules(CALENDAR_SERVICE2 calendar-service2)
-pkg_check_modules(CONTACTS_SERVICE2 contacts-service2)
+pkg_check_modules(pkgs REQUIRED ${PKG_MODULES})
 
 FOREACH(flag ${pkgs_CFLAGS} ${CALENDAR_SERVICE2_CFLAGS} ${CONTACTS_SERVICE2_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -41,6 +54,7 @@ SET(VERSION 1.0)
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DFACTORYFS=\"$ENV{FACTORYFS}\"")
 ADD_DEFINITIONS("-DTARGET")
+ADD_DEFINITIONS("-D_FILE_OFFSET_BITS=64")
 ADD_DEFINITIONS("-DSLP_DEBUG")
 if(CALENDAR_SERVICE2_FOUND)
   ADD_DEFINITIONS("-DENABLE_CALENDAR_SERVICE2")
@@ -52,6 +66,6 @@ endif(CONTACTS_SERVICE2_FOUND)
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${CALENDAR_SERVICE2_LDFLAGS} ${CONTACTS_SERVICE2_LDFLAGS} -L${CMAKE_CURRENT_SOURCE_DIR}/../lib -lbluetooth-share-api)
 
-
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/bluetooth-share.efl DESTINATION /etc/smack/accesses.d)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION share/dbus-1/system-services)

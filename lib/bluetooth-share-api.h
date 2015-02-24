@@ -1,13 +1,17 @@
 /*
- * bluetooth-share-api
+ *  bluetooth-share-api
  *
- * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved
+ *
+ * Contact:  Hocheol Seo <hocheol.seo@samsung.com>
+ *           GirishAshok Joshi <girish.joshi@samsung.com>
+ *           DoHyun Pyun <dh79.pyun@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *              http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,6 +52,7 @@ typedef struct {
 	char *addr;
 	char *type;
 	char *content;
+	unsigned int size;
 }bt_tr_data_t;
 
 
@@ -56,6 +61,11 @@ typedef enum {
 	BT_DB_INBOUND
 } bt_tr_db_table_e;
 
+typedef enum {
+	BT_TRANSFER_PENDING = -1,
+	BT_TRANSFER_SUCCESS,
+	BT_TRANSFER_FAIL
+} bt_tr_status_e;
 
 EXPORT_API sqlite3 *bt_share_open_db(void);
 
@@ -78,6 +88,8 @@ EXPORT_API unsigned int bt_share_get_last_session_id(sqlite3 *db, int db_table);
 EXPORT_API int bt_share_release_tr_data_list(GSList *list);
 
 EXPORT_API int bt_share_get_tr_data_count(sqlite3 *db, int db_table);
+
+EXPORT_API int bt_share_get_tr_result_count(sqlite3 *db, int db_table, int *success, int *fail);
 
 EXPORT_API int bt_share_remove_tr_data_by_id(sqlite3 *db, int db_table, int id);
 
