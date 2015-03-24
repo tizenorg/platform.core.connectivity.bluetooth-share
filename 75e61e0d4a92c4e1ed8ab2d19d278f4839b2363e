@@ -1,6 +1,14 @@
 Verified+1: José Bollo <jose.bollo@open.eurogiciel.org>
 Code-Review+2: wu zheng <wu.zheng@intel.com>
 Submitted-by: wu zheng <wu.zheng@intel.com>
+Submitted-at: Mon, 08 Dec 2014 21:28:41 -0700
+Reviewed-on: https://review.tizen.org/gerrit/31648
+Project: platform/core/connectivity/bluetooth-share
+Branch: refs/heads/tizen
+
+Verified+1: José Bollo <jose.bollo@open.eurogiciel.org>
+Code-Review+2: wu zheng <wu.zheng@intel.com>
+Submitted-by: wu zheng <wu.zheng@intel.com>
 Submitted-at: Mon, 08 Dec 2014 20:28:41 -0800
 Reviewed-on: https://review.tizen.org/gerrit/31648
 Project: platform/core/connectivity/bluetooth-share
