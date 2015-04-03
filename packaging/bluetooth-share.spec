@@ -20,10 +20,10 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(dlog)
 # Same check as in tizen-extensions-crosswalk. A per-package or global
 # bcond would be better, but for now let's follow Crosswalk's approach.
-%if "%{profile}" == "mobile"
-BuildRequires:  pkgconfig(calendar-service2)
-BuildRequires:  pkgconfig(contacts-service2)
-%endif
+#%if "%{profile}" == "mobile"
+#BuildRequires:  pkgconfig(calendar-service2)
+#BuildRequires:  pkgconfig(contacts-service2)
+#%endif
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(pmapi)
 BuildRequires:  pkgconfig(sysman)
