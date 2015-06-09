@@ -6,6 +6,7 @@ includedir=@INCLUDEDIR@
 Name: bluetooth-share-api
 Description: SAMSUNG Linux platform Bluetooth share API
 Version: @VERSION@
-Requires: dlog dbus-glib-1 vconf
+Requires.private: dlog vconf
+Requires: dbus-glib-1
 Libs: -L${libdir} -lbluetooth-share-api
 Cflags: -I${includedir} -I${includedir}/bluetooth-share-api

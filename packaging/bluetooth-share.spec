@@ -10,7 +10,6 @@ Source1002: libbluetooth-share.manifest
 Source1003: libbluetooth-share-devel.manifest
 Source1004: init_db.sh
 Requires(post): coreutils
-Requires(post): sqlite
 Requires(post): smack
 BuildRequires:  cmake
 BuildRequires:  gettext-tools
@@ -18,6 +17,8 @@ BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(bluetooth-api)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(sqlite3)
+BuildRequires:  pkgconfig(ecore)
 # Same check as in tizen-extensions-crosswalk. A per-package or global
 # bcond would be better, but for now let's follow Crosswalk's approach.
 #%if "%{profile}" == "mobile"

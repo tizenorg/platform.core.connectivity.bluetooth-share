@@ -19,7 +19,7 @@ INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
 				dbus-glib-1 appcore-common
 				dlog vconf pmapi sysman
-				notification
+				notification sqlite3 ecore-file
 				appsvc appcore-efl libprivilege-control
 				capi-content-media-content
 				libtzplatform-config)
