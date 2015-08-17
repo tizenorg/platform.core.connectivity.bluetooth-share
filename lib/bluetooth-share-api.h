@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include <db-util.h>
+#include <sqlite3.h>
 
 #ifndef EXPORT_API
 #define EXPORT_API __attribute__((visibility("default")))
