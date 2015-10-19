@@ -8,6 +8,7 @@ src/obex-event-handler.c
 src/bt-share-syspopup.c
 src/bt-share-ipc.c
 src/bt-share-noti-handler.c
+src/bt-share-cynara.c
 )
 
 
@@ -22,7 +23,8 @@ pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
 				notification sqlite3 ecore-file
 				appsvc appcore-efl libprivilege-control
 				capi-content-media-content
-				libtzplatform-config)
+				libtzplatform-config
+				cynara-creds-dbus cynara-client cynara-session)
 pkg_check_modules(CALENDAR_SERVICE2 calendar-service2)
 pkg_check_modules(CONTACTS_SERVICE2 contacts-service2)
 
