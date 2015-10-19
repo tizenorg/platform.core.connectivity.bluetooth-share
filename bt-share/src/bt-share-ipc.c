@@ -38,6 +38,7 @@
 #include "obex-event-handler.h"
 #include "bluetooth-share-api.h"
 #include "bt-share-common.h"
+#include "bt-share-cynara.h"
 
 GSList *bt_transfer_list = NULL;
 DBusConnection *dbus_connection = NULL;
@@ -222,7 +223,9 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 {
 	int ret;
 	char *member;
+	const char *sender;
 	const char *path = dbus_message_get_path(msg);
+	bt_share_cynara_creds sender_creds;
 
 	if (dbus_message_get_type(msg) != DBUS_MESSAGE_TYPE_SIGNAL)
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -233,6 +236,13 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 	member = (char *)dbus_message_get_member(msg);
 	DBG("member (%s)\n", member);
 
+	sender = dbus_message_get_sender(msg);
+	ret = _bt_share_cynara_get_creds(sys_conn, sender, &sender_creds);
+	if (ret != 0) {
+		ERR("acquiring cynara creds failed\n");
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	}
+
 	if (dbus_message_is_signal(msg, BT_SYSPOPUP_INTERFACE, BT_SYSPOPUP_METHOD_RESPONSE)) {
 		int res = 0;
 		dbus_message_get_args(msg, NULL,
@@ -241,6 +251,12 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		__popup_res_cb(res);
 	} else if (dbus_message_is_signal(msg, BT_UG_IPC_INTERFACE, BT_UG_IPC_METHOD_SEND)) {
 		opc_transfer_info_t *node;
+
+		if (_bt_share_cynara_check(&sender_creds, BT_SHARE_PRIVILEGE) != BT_SHARE_FAIL) {
+			ERR("Cynara denied file send\n");
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+
 		node = __add_transfer_info(msg);
 		if (node == NULL)
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -275,6 +291,12 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 	} else if (dbus_message_is_signal(msg, BT_SHARE_UI_INTERFACE,
 				BT_SHARE_UI_SIGNAL_SEND_FILE)) {
 		opc_transfer_info_t *node;
+
+		if (_bt_share_cynara_check(&sender_creds, BT_SHARE_PRIVILEGE) != BT_SHARE_FAIL) {
+			ERR("Cynara denied file send\n");
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+
 		node = __add_transfer_info(msg);
 		if (node == NULL)
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

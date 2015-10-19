@@ -33,6 +33,9 @@ BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(capi-content-media-content)
 BuildRequires:  pkgconfig(libtzplatform-config)
+BuildRequires:  pkgconfig(cynara-client)
+BuildRequires:  pkgconfig(cynara-session)
+BuildRequires:  pkgconfig(cynara-creds-dbus)
 
 %description
 Bluetooth File Share Agent
