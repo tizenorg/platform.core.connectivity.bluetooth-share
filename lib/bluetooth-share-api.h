@@ -48,6 +48,7 @@ typedef struct {
 	char *addr;
 	char *type;
 	char *content;
+	unsigned int size;
 }bt_tr_data_t;
 
 
