@@ -19,6 +19,7 @@
 
 #include <applog.h>
 #include <notification.h>
+#include <notification_list.h>
 #include <appsvc.h>
 #include <vconf.h>
 
