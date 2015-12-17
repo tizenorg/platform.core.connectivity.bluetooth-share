@@ -36,7 +36,6 @@
 #include "bt-share-resource.h"
 #include "bt-share-notification.h"
 #include "bt-share-common.h"
-#include "bt-share-cynara.h"
 
 #include "bluetooth-share-api.h"
 
@@ -308,11 +307,6 @@ int main(void)
 							PC_OPERATION_SUCCESS)
 		ERR("Failed to set app privilege.\n");
 
-	if (_bt_share_cynara_init()) {
-		ERR("Failed to initialize Cynara.\n");
-		return -1;
-	}
-
 	bluetooth_register_callback(_bt_share_event_handler, NULL);
 	ret = bluetooth_opc_init();
 	if (ret != BLUETOOTH_ERROR_NONE) {
@@ -341,7 +335,6 @@ int main(void)
 
 	_bt_delete_notification(noti);
 	__bt_release_service(&ad);
-	_bt_share_cynara_finish();
 
 	return 0;
 }
