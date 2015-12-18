@@ -31,7 +31,6 @@ BuildRequires:  pkgconfig(sysman)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(db-util)
-BuildRequires:  pkgconfig(libprivilege-control)
 BuildRequires:  pkgconfig(capi-content-media-content)
 BuildRequires:  pkgconfig(libtzplatform-config)
 

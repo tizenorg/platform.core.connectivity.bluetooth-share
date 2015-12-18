@@ -21,7 +21,6 @@
 #include <glib-object.h>
 #include <string.h>
 #include <appcore-efl.h>
-#include <privilege-control.h>
 #include <vconf.h>
 
 /* For multi-user support */
@@ -301,11 +300,6 @@ int main(void)
 	/* init internationalization */
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
-
-	/* Set the uid / gid to 5000 */
-	if (perm_app_set_privilege("com.samsung.bluetooth-share", NULL, NULL) !=
-							PC_OPERATION_SUCCESS)
-		ERR("Failed to set app privilege.\n");
 
 	bluetooth_register_callback(_bt_share_event_handler, NULL);
 	ret = bluetooth_opc_init();

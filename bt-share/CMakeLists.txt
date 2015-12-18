@@ -20,7 +20,7 @@ pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
 				dbus-glib-1 appcore-common
 				dlog vconf pmapi sysman
 				notification sqlite3 ecore-file
-				appsvc appcore-efl libprivilege-control
+				appsvc appcore-efl
 				capi-content-media-content
 				libtzplatform-config)
 pkg_check_modules(CALENDAR_SERVICE2 calendar-service2)
