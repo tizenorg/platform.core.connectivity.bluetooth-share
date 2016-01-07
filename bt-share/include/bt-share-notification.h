@@ -30,7 +30,7 @@ extern "C" {
 
 #include "bt-share-main.h"
 
-#define BT_SHARE_BIN_PATH tzplatform_mkpath(TZ_SYS_BIN, "bluetooth-share")
+#define BT_SHARE_BIN_PATH "/usr/bin/bluetooth-share"
 
 #define QP_NO_APP_LAUNCH	NOTIFICATION_PROP_DISABLE_APP_LAUNCH
 #define QP_NO_TICKER		NOTIFICATION_PROP_DISABLE_TICKERNOTI
@@ -40,6 +40,8 @@ extern "C" {
 #define NOTIFICATION_TEXT_LEN_MAX 100
 #define NOTI_TR_TYPE_IN "inbound"
 #define NOTI_TR_TYPE_OUT "outbound"
+#define NOTI_OPS_APP_ID	"bluetooth-share-opp-server"
+#define NOTI_OPC_APP_ID	"bluetooth-share-opp-client"
 
 /* Priv_id should be unique. */
 enum {
@@ -54,38 +56,46 @@ typedef enum {
 } bt_qp_type_t;
 
 typedef enum {
+	BT_SENT_NOTI,
+	BT_SENDING_NOTI,
+	BT_RECEIVED_NOTI,
+	BT_RECEIVING_NOTI,
+} bt_notification_type_e;
+
+typedef enum {
 	CREATE_PROGRESS,
 	CREATE_TR_LIST
-} bt_qp_launch_type_t;
-
+} bt_notification_launch_type_e;
 
 notification_h _bt_create_notification(bt_qp_type_t type);
 
-int _bt_insert_notification(notification_h noti,
-				char *title,
-				char *content,
-				char *icon_path);
+notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_type_e type, int index, int total);
 
-int _bt_update_notification(notification_h noti,
-				char *title,
-				char *content,
-				char *icon_path);
+int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
+		char *title, char *content, char *icon_path);
 
-int _bt_update_notification_progress(void *handle,
-				int id,
-				int val);
 
+int _bt_update_notification_progress(notification_h noti,
+		int id, int val);
 
 gboolean _bt_get_notification_text(int priv_id, char *str);
 
+int _bt_get_notification_priv_id(notification_h noti);
+
 int _bt_delete_notification(notification_h noti);
 
-int _bt_set_notification_app_launch(notification_h noti,
-					bt_qp_launch_type_t type,
-					const char *transfer_type,
-					const char *filename,
-					const char *progress_cnt);
 int _bt_set_notification_property(notification_h noti, int flag);
+
+int _bt_get_notification_priv_id(notification_h noti);
+
+int _bt_set_notification_app_launch(notification_h noti,
+		bt_notification_launch_type_e launch_type,
+		const char *transfer_type,
+		const char *filename,
+		const char *progress_cnt,
+		int transfer_id);
+
+gboolean _bt_update_notification_status(struct bt_appdata *ad );
 
 void _bt_register_notification_cb(struct bt_appdata *ad);
 

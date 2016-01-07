@@ -46,115 +46,25 @@ extern "C" {
  *
  */
 
-#if defined(SLP_SYSLOG_OUT) || defined(SLP_DAEMON)
-#include <syslog.h>
-#endif
 #include <stdio.h>
 #include <dlog.h>
 
-#if defined(SLP_SYSLOG_OUT) || defined(SLP_DAEMON)
-#define __LOG(prio, fmt, arg...) \
-	do { syslog(prio, fmt, ##arg); } while (0)
+#undef LOG_TAG
+#define LOG_TAG "BLUETOOTH_SHARE_DB"
 
-#define __LOGD(prio, fmt, arg...) \
-	do {
-		syslog(prio, "[%s:%d] "fmt"\n", __FILE__, __LINE__, ##arg);
-	} while (0)
-#else
-#define __LOG(prio, fmt, arg...) do { } while (0)
-#define __LOGD(prio, fmt, arg...) do { } while (0)
-#endif
-
-#define __PRT(prio, fmt, arg...) \
-	do { \
-		fprintf((LOG_PRI(prio) == LOG_ERR ? stderr : stdout), \
-		fmt"\n", ##arg); \
-	} while (0)
-
-#define __PRTD(prio, fmt, arg...) \
-	do { \
-		fprintf((LOG_PRI(prio) == LOG_ERR ? stderr : stdout), \
-		"[%s:%d] "fmt"\n", __FILE__, __LINE__, ##arg); \
-	} while (0)
-#define _NOUT (prio, fmt, arg...) do { } while (0)
-
-#ifdef SLP_DEBUG
-#define _LOGD __LOGD
-#define _LOG  __LOGD
-#define _PRTD __PRTD
-#define _PRT  __PRTD
-#else
-#define _LOGD _NOUT
-#define _LOG  __LOG
-#define _PRTD _NOUT
-#define _PRT  __PRT
-#endif
-
-#define SYSLOG_INFO(fmt, arg...) _LOG(LOG_INFO, fmt, ##arg)
-#define SYSLOG_ERR(fmt, arg...) _LOG(LOG_ERR, fmt, ##arg)
-#define SYSLOG_DBG(fmt, arg...) _LOGD(LOG_DEBUG, fmt, ##arg)
-
-#define PRT_INFO(fmt, arg...) \
-	LOG(LOG_DEBUG, BT_SHARE, "%s:%d "fmt, __func__, __LINE__, ##arg)
-
-#define PRT_ERR(fmt, arg...) \
-	LOG(LOG_DEBUG, BT_SHARE, "%s:%d "fmt, __func__, __LINE__, ##arg)
-
-#define PRT_DBG(fmt, arg...) \
-	LOG(LOG_DEBUG, BT_SHARE, "%s:%d "fmt, __func__, __LINE__, ##arg)
-
-#define BT_SHARE				"BT_SHARE"
-
-
-#if defined(SLP_SYSLOG_OUT) || defined(SLP_DAEMON)
-#define INFO SYSLOG_INFO
-#define ERR SYSLOG_ERR
-#define DBG SYSLOG_DBG
-#else
 #define INFO(fmt, arg...) \
-	SLOG(LOG_DEBUG, BT_SHARE, "%s:%d "fmt, __func__, __LINE__, ##arg)
+		SLOGI(fmt, ##arg)
 
 #define ERR(fmt, arg...) \
-	SLOG(LOG_DEBUG, BT_SHARE, "%s:%d "fmt, __func__, __LINE__, ##arg)
+		SLOGE(fmt, ##arg)
 
 #define DBG(fmt, arg...) \
-	SLOG(LOG_DEBUG, BT_SHARE, "%s:%d "fmt, __func__, __LINE__, ##arg)
-#endif
+		SLOGD(fmt, ##arg)
 
-#ifdef SLP_DEBUG
-#define warn_if(expr, fmt, arg...) do { \
-		if (expr) { \
-			ERR("(%s) -> "fmt, #expr, ##arg); \
-		} \
-	} while (0)
-#define ret_if(expr) do { \
-		if (expr) { \
-			ERR("(%s) -> %s() return", #expr, __FUNCTION__); \
-			return; \
-		} \
-	} while (0)
-#define retv_if(expr, val) do { \
-		if (expr) { \
-			ERR("(%s) -> %s() return", #expr, __FUNCTION__); \
-			return (val); \
-		} \
-	} while (0)
-#define retm_if(expr, fmt, arg...) do { \
-		if (expr) { \
-			ERR(fmt, ##arg); \
-			ERR("(%s) -> %s() return", #expr, __FUNCTION__); \
-			return; \
-		} \
-	} while (0)
-#define retvm_if(expr, val, fmt, arg...) do { \
-		if (expr) { \
-			ERR(fmt, ##arg); \
-			ERR("(%s) -> %s() return", #expr, __FUNCTION__); \
-			return (val); \
-		} \
-	} while (0)
+#define DBG_SECURE(fmt, args...) SECURE_SLOGD(fmt, ##args)
+#define ERR_SECURE(fmt, args...) SECURE_SLOGE(fmt, ##args)
+#define INFO_SECURE(fmt, args...) SECURE_SLOGI(fmt, ##args)
 
-#else
 #define warn_if(expr, fmt, arg...) do { \
 		if (expr) { \
 			ERR(fmt, ##arg); \
@@ -183,7 +93,6 @@ extern "C" {
 		} \
 	} while (0)
 
-#endif
 
 #ifdef __cplusplus
 }

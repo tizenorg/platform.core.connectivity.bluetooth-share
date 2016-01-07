@@ -26,7 +26,9 @@
 #include <string.h>
 #include <notification.h>
 #include <sysman.h>
+#include <aul.h>
 #include <vconf.h>
+#include <bundle_internal.h>
 
 #include "applog.h"
 #include "bluetooth-api.h"
@@ -40,12 +42,16 @@
 #include "bt-share-common.h"
 #include "bt-share-cynara.h"
 
+#define FILEPATH_LEN_MAX 4096
+
 GSList *bt_transfer_list = NULL;
 DBusConnection *dbus_connection = NULL;
 
 extern struct bt_appdata *app_state;
 
 static void __bt_create_send_data(opc_transfer_info_t *node);
+static void __bt_create_send_failed_data(char *filepath, char *dev_name,
+								char *addr, char *type, unsigned int size);
 static void __bt_share_update_tr_info(int tr_uid, int tr_type);
 
 static void __bt_tr_data_free(bt_tr_data_t *data)
@@ -218,11 +224,56 @@ int _request_file_send(opc_transfer_info_t *node)
 	return BLUETOOTH_ERROR_NONE;
 }
 
+static int __bt_get_owner_info(DBusMessage *msg, char **name,
+		char **previous, char **current)
+{
+	DBusMessageIter item_iter;
+
+	dbus_message_iter_init(msg, &item_iter);
+
+	if (dbus_message_iter_get_arg_type(&item_iter)
+			!= DBUS_TYPE_STRING) {
+		ERR("This is bad format dbus\n");
+		return BLUETOOTH_ERROR_INTERNAL;
+	}
+
+	dbus_message_iter_get_basic(&item_iter, name);
+
+	retv_if(*name == NULL, BLUETOOTH_ERROR_INTERNAL);
+
+	dbus_message_iter_next(&item_iter);
+
+	if (dbus_message_iter_get_arg_type(&item_iter)
+			!= DBUS_TYPE_STRING) {
+		ERR("This is bad format dbus\n");
+		return BLUETOOTH_ERROR_INTERNAL;
+	}
+
+	dbus_message_iter_get_basic(&item_iter, previous);
+
+	retv_if(*previous == NULL, BLUETOOTH_ERROR_INTERNAL);
+
+	dbus_message_iter_next(&item_iter);
+
+	if (dbus_message_iter_get_arg_type(&item_iter)
+			!= DBUS_TYPE_STRING) {
+		ERR("This is bad format dbus\n");
+		return BLUETOOTH_ERROR_INTERNAL;
+	}
+
+	dbus_message_iter_get_basic(&item_iter, current);
+
+	retv_if(*current == NULL, BLUETOOTH_ERROR_INTERNAL);
+
+	return BLUETOOTH_ERROR_NONE;
+}
+
 static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 							DBusMessage *msg, void *data)
 {
 	int ret;
 	char *member;
+	struct bt_appdata *ad = app_state;
 	const char *sender;
 	const char *path = dbus_message_get_path(msg);
 	bt_share_cynara_creds sender_creds;
@@ -265,29 +316,36 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
 			DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
 		} else if ( ret != BLUETOOTH_ERROR_NONE) {
-			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL);
+			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL, BT_STR_UNABLE_TO_SEND);
 			g_slist_free_full(bt_transfer_list,
 						(GDestroyNotify)_free_transfer_info);
 			bt_transfer_list = NULL;
 		}
 	} else if (dbus_message_is_signal(msg, BT_SHARE_UI_INTERFACE, BT_SHARE_UI_SIGNAL_OPPABORT)) {
-			const char *transfer_type = NULL;
-			int transfer_id = 0;
-			int noti_id = 0;
-			if (!dbus_message_get_args(msg, NULL,
+		const char *transfer_type = NULL;
+		int noti_id = 0;
+
+		if (!dbus_message_get_args(msg, NULL,
 					DBUS_TYPE_STRING, &transfer_type,
 					DBUS_TYPE_INT32, &noti_id,
 					DBUS_TYPE_INVALID)) {
-				ERR("OPP abort handling failed");
-				return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+			ERR("OPP abort handling failed");
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+		ad->opp_transfer_abort = TRUE; /* Transfer aborted by user*/
+		INFO("transfer_type = %s", transfer_type);
+		if (!g_strcmp0(transfer_type, NOTI_TR_TYPE_OUT)) {
+			bluetooth_opc_cancel_push();
+			if (ad->opc_noti) {
+				ret = _bt_delete_notification(ad->opc_noti);
+				if (ret == NOTIFICATION_ERROR_NONE) {
+					ad->opc_noti = NULL;
+					ad->opc_noti_id = 0;
+				}
 			}
-			DBG("transfer_type = %s\n", transfer_type);
-			if (!g_strcmp0(transfer_type, NOTI_TR_TYPE_OUT)) {
-				bluetooth_opc_cancel_push();
-			} else {
-				transfer_id = _bt_get_transfer_id_by_noti_id(noti_id);
-				bluetooth_obex_server_cancel_transfer(transfer_id);
-			}
+		} else {
+			bluetooth_obex_server_cancel_transfer(noti_id);
+		}
 	} else if (dbus_message_is_signal(msg, BT_SHARE_UI_INTERFACE,
 				BT_SHARE_UI_SIGNAL_SEND_FILE)) {
 		opc_transfer_info_t *node;
@@ -305,7 +363,7 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
 			DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
 		} else if ( ret != BLUETOOTH_ERROR_NONE) {
-			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL);
+			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL, BT_STR_UNABLE_TO_SEND);
 			g_slist_free_full(bt_transfer_list,
 							(GDestroyNotify)_free_transfer_info);
 			bt_transfer_list = NULL;
@@ -327,6 +385,23 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		if (bluetooth_obex_server_deinit() == BLUETOOTH_ERROR_NONE) {
 			DBG("Obex Server deinit");
 		}
+	} else if (strcasecmp(member, "NameOwnerChanged") == 0) {
+		char *name = NULL;
+		char *previous = NULL;
+		char *current = NULL;
+
+		if (__bt_get_owner_info(msg, &name, &previous, &current)) {
+			ERR("Fail to get the owner info");
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+
+		if (*current != '\0')
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+		if (strcasecmp(name, "org.bluez") == 0) {
+			INFO("Bluetoothd is terminated");
+			_bt_terminate_bluetooth_share();
+		}
 	} else {
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
@@ -335,14 +410,14 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 
 gboolean _bt_init_dbus_signal(void)
 {
-	DBG("+\n");
+	DBG("+");
 	DBusGConnection *conn;
 	GError *err = NULL;
 	DBusError dbus_error;
 
 	conn = dbus_g_bus_get(DBUS_BUS_SYSTEM, &err);
 	if (!conn) {
-		DBG(" DBUS get failed\n");
+		ERR(" DBUS get failed");
 		g_error_free(err);
 		return FALSE;
 	}
@@ -352,29 +427,32 @@ gboolean _bt_init_dbus_signal(void)
 	dbus_error_init(&dbus_error);
 	dbus_connection_add_filter(dbus_connection, __event_filter, NULL, NULL);
 	dbus_bus_add_match(dbus_connection,
-			   "type=signal,interface=" BT_SYSPOPUP_INTERFACE
-			   ",member=Response", &dbus_error);
+			"type=signal,interface=" BT_BLUEZ_INTERFACE
+			",member=NameOwnerChanged", &dbus_error);
 	dbus_bus_add_match(dbus_connection,
-			   "type=signal,interface=" BT_UG_IPC_INTERFACE
-			   ",member=Send", &dbus_error);
+			"type=signal,interface=" BT_SYSPOPUP_INTERFACE
+			",member=Response", &dbus_error);
 	dbus_bus_add_match(dbus_connection,
-			   "type=signal,interface=" BT_SHARE_UI_INTERFACE
-			   ",member=opp_abort", &dbus_error);
+			"type=signal,interface=" BT_UG_IPC_INTERFACE
+			",member=Send", &dbus_error);
 	dbus_bus_add_match(dbus_connection,
-			   "type=signal,interface=" BT_SHARE_UI_INTERFACE
-			   ",member=send_file", &dbus_error);
+			"type=signal,interface=" BT_SHARE_UI_INTERFACE
+			",member=opp_abort", &dbus_error);
 	dbus_bus_add_match(dbus_connection,
-			   "type=signal,interface=" BT_SHARE_UI_INTERFACE
-			   ",member=info_update", &dbus_error);
+			"type=signal,interface=" BT_SHARE_UI_INTERFACE
+			",member=send_file", &dbus_error);
 	dbus_bus_add_match(dbus_connection,
-			   "type=signal,interface=" BT_SHARE_FRWK_INTERFACE
-			   ",member=deinit", &dbus_error);
+			"type=signal,interface=" BT_SHARE_UI_INTERFACE
+			",member=info_update", &dbus_error);
+	dbus_bus_add_match(dbus_connection,
+			"type=signal,interface=" BT_SHARE_FRWK_INTERFACE
+			",member=deinit", &dbus_error);
 	if (dbus_error_is_set(&dbus_error)) {
-		ERR("Fail to add dbus filter signal\n");
+		ERR("Fail to add dbus filter signal");
 		dbus_error_free(&dbus_error);
 	}
 
-	DBG("-\n");
+	DBG("-");
 	return TRUE;
 }
 
@@ -413,53 +491,40 @@ void _bt_send_message_to_ui(int transfer_id, char *name, int percentage, gboolea
 }
 
 
-void _bt_create_warning_popup(int error_type)
+void _bt_create_warning_popup(int error_type, char *msg)
 {
-	/* If bluetooth-share-ui process is existed, send dbus signal. */
-	/* Otherwise create the process and terminate it after popup shown */
-	if (sysman_get_pid(UI_PKG_PATH) == -1) {
-		char str[BT_TEXT_LEN_MAX] = {0,};
+	/* If bluetooth-share-ui process is  not running */
+	/* Then create the process and terminate it after popup shown */
+	if (aul_app_is_running(UI_PACKAGE) == 0) {
+		DBG("Creating new process for Warning Popup");
+		char str[BT_TEXT_LEN_MAX] = { 0, };
+		bundle *b;
 
-		switch(error_type) {
-		case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
-		case BLUETOOTH_ERROR_NOT_CONNECTED:
-		case BLUETOOTH_ERROR_ACCESS_DENIED:
-		case BLUETOOTH_ERROR_OUT_OF_MEMORY:
-		case BLUETOOTH_ERROR_INTERNAL:
-			snprintf(str, BT_TEXT_LEN_MAX, "%s", BT_STR_UNABLE_TO_SEND);
-			break;
-		default:
-			return;
+		DBG("error_type: %d",error_type);
+		switch (error_type) {
+			case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
+			case BLUETOOTH_ERROR_NOT_CONNECTED:
+			case BLUETOOTH_ERROR_ACCESS_DENIED:
+			case BLUETOOTH_ERROR_OUT_OF_MEMORY:
+			case BLUETOOTH_ERROR_INTERNAL:
+			case BLUETOOTH_ERROR_CANCEL:
+				snprintf(str, BT_TEXT_LEN_MAX, "%s",
+						msg);
+				break;
+			default:
+				return;
 		}
 
-		INFO("bt create warning popup notification");
-		// TODO : display a popup
+		b = bundle_create();
+		ret_if(b == NULL);
 
-	}else {
-		DBusMessage *msg = NULL;
-		ret_if(dbus_connection == NULL);
+		bundle_add(b, "launch-type", "warning_popup");
+		bundle_add(b, "message", str);
 
-		msg = dbus_message_new_signal(BT_SHARE_ENG_OBJECT,
-					      BT_SHARE_ENG_INTERFACE,
-					      BT_SHARE_ENG_SIGNAL_ERROR);
-		if (!msg) {
-			ERR("Unable to allocate memory\n");
-			return;
-		}
+		aul_launch_app(UI_PACKAGE, b);
 
-		if (!dbus_message_append_args(msg,
-				DBUS_TYPE_INT32, &error_type,
-				DBUS_TYPE_INVALID)) {
-			DBG("Event sending failed\n");
-			dbus_message_unref(msg);
-			return;
-		}
-
-		dbus_message_set_destination(msg, BT_SHARE_UI_INTERFACE);
-		dbus_connection_send(dbus_connection, msg, NULL);
-		dbus_message_unref(msg);
+		bundle_free(b);
 	}
-
 	return;
 }
 
@@ -508,6 +573,42 @@ static char *__bt_conv_addr_type_to_addr_string(char *addr)
 	return g_strdup(address);
 }
 
+static void __bt_create_send_failed_data(char *filepath, char *dev_name,
+		char *addr, char *type, unsigned int size)
+{
+	int session_id;
+	sqlite3 *db = NULL;
+
+	db = bt_share_open_db();
+	if (!db)
+		return;
+
+	session_id = bt_share_get_last_session_id(db, BT_DB_OUTBOUND);
+
+	INFO("Last session id = %d", session_id);
+
+	bt_tr_data_t *tmp;
+	tmp = g_malloc0(sizeof(bt_tr_data_t));
+	if(tmp == NULL)
+		return;
+
+	tmp->tr_status = BT_TR_FAIL;
+	tmp->sid = session_id + 1;
+	tmp->file_path = g_strdup(filepath);
+	tmp->content = g_strdup(filepath);
+	tmp->dev_name = g_strdup(dev_name);
+	tmp->type = g_strdup(type);
+	tmp->timestamp = __bt_get_current_timedata();
+	tmp->addr = __bt_conv_addr_type_to_addr_string(addr);
+	tmp->size = size;
+	bt_share_add_tr_data(db, BT_DB_OUTBOUND, tmp);
+	__bt_tr_data_free(tmp);
+
+	bt_share_close_db(db);
+
+	return;
+}
+
 static void __bt_create_send_data(opc_transfer_info_t *node)
 {
 	DBG("__bt_create_send_data  \n");
@@ -530,15 +631,20 @@ static void __bt_create_send_data(opc_transfer_info_t *node)
 	for (count = 0; count < node->file_cnt; count++) {
 		bt_tr_data_t *tmp;
 		tmp = g_malloc0(sizeof(bt_tr_data_t));
+		if (tmp == NULL)
+			return;
 
 		tmp->tr_status = BT_TR_ONGOING;
 		tmp->sid = session_id + 1;
 		tmp->file_path = g_strdup(node->file_path[count]);
+		DBG("tmp->file_path : %s", tmp->file_path);
+
 		tmp->content = g_strdup(node->content[count]);
 		tmp->dev_name =  g_strdup(node->name);
 		tmp->type =  g_strdup(node->type);
 		tmp->timestamp = __bt_get_current_timedata();
 		tmp->addr = __bt_conv_addr_type_to_addr_string(node->addr);
+		tmp->size = node->size[count];
 		bt_share_add_tr_data(db, BT_DB_OUTBOUND, tmp);
 		__bt_tr_data_free(tmp);
 
@@ -574,6 +680,8 @@ gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status)
 		return FALSE;
 
 	tmp = g_malloc0(sizeof(bt_tr_data_t));
+	if (!tmp)
+		return FALSE;
 
 	tmp->tr_status = status;
 	tmp->timestamp = __bt_get_current_timedata();
@@ -585,7 +693,8 @@ gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status)
 }
 
 gboolean _bt_add_recv_transfer_status_data(char *device_name,
-				char *filepath, int status)
+					char *filepath, char *type,
+								unsigned int size, int status)
 {
 	if (device_name == NULL || filepath == NULL)
 		return FALSE;
@@ -600,11 +709,15 @@ gboolean _bt_add_recv_transfer_status_data(char *device_name,
 		return FALSE;
 
 	tmp = g_malloc0(sizeof(bt_tr_data_t));
+	if(tmp == NULL)
+		return FALSE;
 
 	tmp->tr_status = status;
 	tmp->file_path = g_strdup(filepath);
 	tmp->dev_name =  g_strdup(device_name);
 	tmp->timestamp = __bt_get_current_timedata();
+	tmp->type = g_strdup(type);
+	tmp->size = size;
 	bt_share_add_tr_data(db, BT_DB_INBOUND, tmp);
 	bt_share_close_db(db);
 	__bt_tr_data_free(tmp);
@@ -658,9 +771,8 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 				snprintf(str, sizeof(str), BT_TR_STATUS,
 					ad->send_data.tr_success, ad->send_data.tr_fail);
 
-				_bt_update_notification(ad->send_noti,
-						BT_STR_SENT, str,
-						BT_ICON_QP_SEND);
+				_bt_update_notification(ad, ad->send_noti,
+						NULL, NULL, NULL);
 			} else {
 				_bt_delete_notification(ad->send_noti);
 			}
@@ -699,9 +811,8 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 				snprintf(str, sizeof(str), BT_TR_STATUS,
 					ad->recv_data.tr_success, ad->recv_data.tr_fail);
 
-				_bt_update_notification(ad->receive_noti,
-						BT_STR_RECEIVED, str,
-						BT_ICON_QP_RECEIVE);
+				_bt_update_notification(ad, ad->receive_noti,
+						NULL, NULL, NULL);
 			} else {
 				_bt_delete_notification(ad->receive_noti);
 			}

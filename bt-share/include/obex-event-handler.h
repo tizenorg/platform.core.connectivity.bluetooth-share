@@ -55,6 +55,7 @@ void _bt_app_obex_download_dup_file_cb(void *data, void *obj,
 				       void *event_info);
 
 void _bt_get_default_storage(char *storage);
+void _bt_obex_cancel_transfer(void *data);
 
 
 #ifdef __cplusplus

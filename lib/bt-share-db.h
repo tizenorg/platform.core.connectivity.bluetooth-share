@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#define BT_TRANSFER_DB		tzplatform_mkpath(TZ_USER_DB, ".bluetooth_transfer.db")
+#define BT_TRANSFER_DB		"/opt/usr/dbspace/.bluetooth_transfer.db"
 #define BT_INBOUND_TABLE	"inbound"
 #define BT_OUTBOUND_TABLE	"outbound"
 #define BT_DB_QUERY_LEN		512

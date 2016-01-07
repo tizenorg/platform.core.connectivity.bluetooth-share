@@ -34,9 +34,7 @@ extern "C" {
 #endif
 
 #define UI_PACKAGE "org.tizen.bluetooth-share-ui"
-#define UI_PKG_PATH tzplatform_mkpath(TZ_SYS_RW_APP, \
-		"org.tizen.bluetooth-share-ui/bin/bluetooth-share-ui")
-
+#define UI_PKG_PATH "/usr/apps/org.tizen.bluetooth-share-ui/bin/bluetooth-share-ui" 
 typedef void (*bt_app_cb) (void *, void *, void *);
 
 typedef struct {
@@ -60,16 +58,18 @@ struct bt_appdata {
 	notification_h send_noti;
 	notification_h receive_noti;
 	notification_h opc_noti;
+	int send_noti_id;
+	int receive_noti_id;
 	int opc_noti_id;
 	int syspopup_call;
 	DBusGConnection *conn;
 	GObject *object;
 	gboolean obex_server_init;
+	bool opp_transfer_abort;
 };
 
 
-void _bt_terminate_app(void);
-
+void _bt_terminate_bluetooth_share(void);
 int _bt_init_obex_server(void);
 
 #ifdef __cplusplus

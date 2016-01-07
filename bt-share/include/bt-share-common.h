@@ -30,13 +30,15 @@ extern "C" {
 #define BT_SHARE_FAIL -1
 #define BT_SHARE_ERROR_NONE 0
 
-#define BT_TMP_DIR "/tmp/"
+#define BT_TMP_DIR "/opt/usr/media/Downloads/.bluetooth/"
 #define BT_TMP_FILE BT_TMP_DIR"bluetooth_content_share"
 #define TXT_FILE_NAME BT_TMP_DIR"bluetooth_content_share.txt"
 #define HTML_FILE_NAME BT_TMP_DIR"bluetooth_content_share.html"
 #define TXT_FILE_FORMAT BT_TMP_DIR"bluetooth_content_share%s.txt"
 #define HTML_FILE_FORMAT BT_TMP_DIR"bluetooth_content_share%s.html"
 #define HTML_FORMAT "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=UTF-8\"/></head><body><a href=\"%s\">%s</a></body></html>"
+
+#define BT_CONTACT_SHARE_TMP_DIR "/opt/usr/media/Downloads/.bluetooth/"
 
 typedef enum {
 	BT_HTTP_FILE,
@@ -55,6 +57,7 @@ int _bt_share_block_sleep(gboolean is_block);
 int _bt_set_transfer_indicator(gboolean state);
 char *_bt_share_create_transfer_file(char *text);
 void _bt_remove_tmp_file(char *file_path);
+void _bt_remove_vcf_file(char *file_path);
 
 #ifdef __cplusplus
 }
