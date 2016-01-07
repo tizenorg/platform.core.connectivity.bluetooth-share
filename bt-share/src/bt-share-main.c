@@ -46,6 +46,18 @@ static gboolean terminated;
 GMainLoop *main_loop = NULL;
 struct bt_appdata *app_state = NULL;
 
+void _bt_terminate_bluetooth_share(void)
+{
+	DBG("+");
+
+	if (main_loop) {
+		g_main_loop_quit(main_loop);
+	} else {
+		terminated = TRUE;
+	}
+	DBG("-");
+}
+
 static void __bt_release_service(struct bt_appdata *ad)
 {
 	if (ad == NULL)
@@ -90,6 +102,13 @@ static void __bt_update_notification_status_values()
 	notification_h noti = NULL;
 	sqlite3 *db = NULL;
 
+	/* Update notification status durning BT off */
+	if (_bt_update_notification_status(ad) == FALSE) {
+		DBG("Notification item is not existed.");
+		return;
+	}
+
+	DBG("Initialize transfer information");
 	db = bt_share_open_db();
 	if (!db)
 		return;
@@ -125,13 +144,13 @@ static void __bt_update_notification_status_values()
 			ad->send_data.tr_success, ad->send_data.tr_fail);
 
 			noti = _bt_create_notification(BT_NOTI_T);
-			_bt_set_notification_app_launch(noti,
-				CREATE_TR_LIST,
-				NOTI_TR_TYPE_OUT, NULL, NULL);
+			//_bt_set_notification_app_launch(noti,
+			//	CREATE_TR_LIST,
+			//	NOTI_TR_TYPE_OUT, NULL, NULL);
 			_bt_set_notification_property(noti, QP_NO_DELETE | QP_NO_TICKER);
-			_bt_insert_notification(noti,
-				BT_STR_SENT, str,
-				BT_ICON_QP_SEND);
+//			_bt_insert_notification(noti,
+//				BT_STR_SENT, str,
+//				BT_ICON_QP_SEND);
 			ad->send_noti = noti;
 		}
 
@@ -164,12 +183,12 @@ static void __bt_update_notification_status_values()
 			DBG("str = [%s] \n", str);
 
 			noti  = _bt_create_notification(BT_NOTI_T);
-			_bt_set_notification_app_launch(noti, CREATE_TR_LIST,
-				NOTI_TR_TYPE_IN, NULL, NULL);
+			//_bt_set_notification_app_launch(noti, CREATE_TR_LIST,
+			//	NOTI_TR_TYPE_IN, NULL, NULL);
 			_bt_set_notification_property(noti, QP_NO_DELETE | QP_NO_TICKER);
-			_bt_insert_notification(noti,
-				BT_STR_RECEIVED, str,
-				BT_ICON_QP_RECEIVE);
+//			_bt_insert_notification(noti,
+//				BT_STR_RECEIVED, str,
+//				BT_ICON_QP_RECEIVE);
 			ad->receive_noti = noti;
 		}
 
@@ -208,9 +227,9 @@ static notification_h __bt_update_notification_adapter_status(void)
 		goto failed;
 	}
 
-	_bt_insert_notification(noti,
-			BT_STR_BLUETOOTH_ON, BT_STR_BLUETOOTH_AVAILABLE,
-			BT_ICON_QP_BT_ON);
+//	_bt_insert_notification(noti,
+//			BT_STR_BLUETOOTH_ON, BT_STR_BLUETOOTH_AVAILABLE,
+//			BT_ICON_QP_BT_ON);
 	return noti;
 
 failed:
@@ -218,6 +237,14 @@ failed:
 	notification_free(noti);
 	return NULL;
 
+}
+
+static int __bt_lang_changed_cb(void *data)
+{
+	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
+		return -1;
+
+	return 0;
 }
 
 static gboolean __bt_dbus_request_name(void)
@@ -298,6 +325,11 @@ int main(void)
 		exit(0);
 	}
 
+	ret = appcore_set_event_callback(APPCORE_EVENT_LANG_CHANGE, __bt_lang_changed_cb, NULL);
+	if(ret < 0)
+		DBG("Failed to excute the change of language");
+
+
 	/* init internationalization */
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
@@ -315,7 +347,7 @@ int main(void)
 	}
 
 	_bt_init_dbus_signal();
-	_bt_init_vconf_notification();
+	_bt_init_vconf_notification(&ad);
 	__bt_update_notification_status_values();
 	_bt_register_notification_cb(&ad);
 
@@ -324,6 +356,7 @@ int main(void)
 
 	if (terminated == TRUE) {
 		__bt_release_service(&ad);
+		bluetooth_unregister_callback();
 		return -1;
 	}
 
@@ -335,6 +368,7 @@ int main(void)
 
 	_bt_delete_notification(noti);
 	__bt_release_service(&ad);
+	bluetooth_unregister_callback();
 	_bt_share_cynara_finish();
 
 	return 0;

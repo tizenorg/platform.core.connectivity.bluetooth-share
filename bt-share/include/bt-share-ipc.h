@@ -27,7 +27,7 @@ extern "C" {
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-
+#include "bluetooth-api.h"
 #include "bt-share-main.h"
 
 #define BT_ADDRESS_LENGTH_MAX 6
@@ -37,6 +37,7 @@ extern "C" {
 #define BT_UG_IPC_EVENT_CONNECTED "Connected"
 #define BT_UG_IPC_EVENT_DISCONNECTED	"Disconnected"
 
+#define BT_BLUEZ_INTERFACE "org.freedesktop.DBus"
 #define BT_SYSPOPUP_IPC_RESPONSE_OBJECT "/org/projectx/bt_syspopup_res"
 #define BT_SYSPOPUP_INTERFACE "User.Bluetooth.syspopup"
 #define BT_SYSPOPUP_METHOD_RESPONSE "Response"
@@ -62,6 +63,7 @@ extern "C" {
 
 #define BT_IPC_STRING_SIZE 256
 #define BT_ADDR_STR_LEN_MAX	18
+#define BT_MIME_TYPE_MAX_LEN	20
 
 #define FILE_PATH_DELIM "?"
 
@@ -108,6 +110,7 @@ typedef struct {
 	char **file_path;
 	char **content;
 	char *type;
+	unsigned int *size;
 } opc_transfer_info_t;
 
 typedef struct {
@@ -145,7 +148,7 @@ void _bt_send_message_to_ui(int transfer_id,
 			    int percentage,
 			    gboolean completed,
 			    int error_type);
-void _bt_create_warning_popup(int error_type);
+void _bt_create_warning_popup(int error_type, char *msg);
 void _bt_update_transfer_list_view(const char *table);
 
 gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status);
@@ -153,8 +156,8 @@ gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status);
 void _bt_rm_all_send_data(void);
 void _bt_rm_all_recv_data(void);
 gboolean _bt_add_recv_transfer_status_data(char *device_name,
-					   char *filepath,
-					   int status);
+					char *filepath, char *type,
+								unsigned int size, int status);
 
 #ifdef __cplusplus
 }

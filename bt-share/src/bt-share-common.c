@@ -23,10 +23,30 @@
 #include <unistd.h>
 #include <vconf.h>
 #include <Ecore_File.h>
+#include <bundle.h>
+#include <eventsystem.h>
 
 #include "vconf-keys.h"
 #include "applog.h"
 #include "bt-share-common.h"
+
+static int __bt_eventsystem_set_value(const char *event, const char *key, const char *value)
+{
+	int ret;
+	bundle *b = NULL;
+
+	b = bundle_create();
+
+	bundle_add_str(b, key, value);
+
+	ret = eventsystem_send_system_event(event, b);
+
+	DBG("eventsystem_send_system_event result: %d", ret);
+
+	bundle_free(b);
+
+	return ret;
+}
 
 int _bt_share_block_sleep(gboolean is_block)
 {
@@ -84,6 +104,7 @@ int _bt_set_transfer_indicator(gboolean state)
 	int bt_device_state;
 	static int block_cnt = 0;
 	int ret;
+	const char *event_val = NULL;
 
 	ret = vconf_get_int(VCONFKEY_BT_STATUS, (void *)&bt_device_state);
 	if (ret != 0) {
@@ -96,13 +117,21 @@ int _bt_set_transfer_indicator(gboolean state)
 		if(bt_device_state & BT_STATUS_TRANSFER)
 			return 0;
 		bt_device_state |= BT_STATUS_TRANSFER;
+		event_val = EVT_VAL_BT_TRANSFERING;
 	} else {
 		if(block_cnt > 0)
 			block_cnt--;
 		if(block_cnt != 0)
 			return 0;
 		bt_device_state ^= BT_STATUS_TRANSFER;
+		event_val = EVT_VAL_BT_NON_TRANSFERING;
 	}
+
+	DBG("event_value: %s", event_val);
+
+	if (__bt_eventsystem_set_value(SYS_EVENT_BT_STATE, EVT_KEY_BT_TRANSFERING_STATE,
+				event_val) != ES_R_OK)
+		ERR("Fail to set value");
 
 	ret = vconf_set_int(VCONFKEY_BT_STATUS, bt_device_state);
 	if (ret != 0) {
@@ -147,6 +176,14 @@ static char *__bt_share_get_transfer_file_name(int file_type)
 void _bt_remove_tmp_file(char *file_path)
 {
 	if (g_str_has_prefix(file_path, BT_TMP_FILE) == TRUE) {
+		DBG("Remove the file: %s", file_path);
+		ecore_file_remove(file_path);
+	}
+}
+
+void _bt_remove_vcf_file(char *file_path)
+{
+	if (g_str_has_prefix(file_path, BT_CONTACT_SHARE_TMP_DIR) == TRUE) {
 		DBG("Remove the file: %s", file_path);
 		ecore_file_remove(file_path);
 	}

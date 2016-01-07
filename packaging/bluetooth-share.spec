@@ -1,3 +1,5 @@
+%define TZ_SYS_SHARE /opt
+
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
 Version:    0.0.47
@@ -16,6 +18,7 @@ BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(bluetooth-api)
 BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(aul)
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(ecore)
@@ -26,16 +29,19 @@ BuildRequires:  pkgconfig(ecore)
 #BuildRequires:  pkgconfig(contacts-service2)
 #%endif
 BuildRequires:  pkgconfig(vconf)
+BuildRequires:  pkgconfig(syspopup-caller)
 BuildRequires:  pkgconfig(pmapi)
 BuildRequires:  pkgconfig(sysman)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(capi-content-media-content)
+BuildRequires:  pkgconfig(storage)
 BuildRequires:  pkgconfig(libtzplatform-config)
 BuildRequires:  pkgconfig(cynara-client)
 BuildRequires:  pkgconfig(cynara-session)
 BuildRequires:  pkgconfig(cynara-creds-dbus)
+BuildRequires:  pkgconfig(eventsystem)
 
 %description
 Bluetooth File Share Agent
@@ -61,15 +67,20 @@ Development package for libbluetooth-share
 cp %{SOURCE1001} %{SOURCE1002} %{SOURCE1003} .
 
 %build
+export CFLAGS="$CFLAGS -DTIZEN_DEBUG_ENABLE"
+export CXXFLAGS="$CXXFLAGS -DTIZEN_DEBUG_ENABLE"
+export FFLAGS="$FFLAGS -DTIZEN_DEBUG_ENABLE"
+
 export CFLAGS+=" -fpie -fvisibility=hidden"
-export LDFLAGS+=" -Wl,--rpath=/usr/%{_libdir} -Wl,--as-needed -Wl,--unresolved-symbols=ignore-in-shared-libs -pie"
+export LDFLAGS+=" -Wl,--rpath=/usr/lib -Wl,--as-needed -Wl,--unresolved-symbols=ignore-in-shared-libs -pie"
 
 %cmake . \
-	-DTZ_SYS_ETC=%{TZ_SYS_ETC}
+	-DCMAKE_INSTALL_PREFIX=%{_prefix}
 make
 
 %install
 %make_install
+
 mkdir -p  %{buildroot}%{TZ_SYS_SHARE}/bt-ftp
 install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/ressources/init_db.sh
 

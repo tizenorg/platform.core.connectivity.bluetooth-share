@@ -18,12 +18,12 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/lib)
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
-				dbus-glib-1 appcore-common
-				dlog vconf pmapi sysman
+				aul dbus-glib-1 appcore-common
+				dlog vconf syspopup-caller pmapi sysman
 				notification sqlite3 ecore-file
-				appsvc appcore-efl
+				appsvc appcore-efl storage
 				capi-content-media-content
-				libtzplatform-config
+				libtzplatform-config eventsystem
 				cynara-creds-dbus cynara-client cynara-session)
 pkg_check_modules(CALENDAR_SERVICE2 calendar-service2)
 pkg_check_modules(CONTACTS_SERVICE2 contacts-service2)
@@ -36,6 +36,7 @@ ENDFOREACH(flag)
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -fPIC")
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -pie")
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
+SET(BINDIR "/usr/bin")
 SET(EXEC_PREFIX "\${prefix}")
 SET(INCLUDEDIR "/usr/include")
 SET(VERSION 1.0)
@@ -56,4 +57,4 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${CALENDAR_SERVICE2_LDFLAG
 
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION share/dbus-1/system-services)
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION /usr/share/dbus-1/system-services)
