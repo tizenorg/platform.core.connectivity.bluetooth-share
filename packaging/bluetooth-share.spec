@@ -103,11 +103,20 @@ install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/ressources/
 %files -n libbluetooth-share
 %manifest libbluetooth-share.manifest
 %defattr(-, root, root)
+%ifarch aarch64
+/usr/lib/libbluetooth-share-api.so.0.*
+%else
 %{_libdir}/libbluetooth-share-api.so.0.*
+%endif
 
 %files -n libbluetooth-share-devel
 %manifest libbluetooth-share-devel.manifest
 %defattr(-, root, root)
 %{_includedir}/bluetooth-share-api/bluetooth-share-api.h
+%ifarch aarch64
+/usr/lib/libbluetooth-share-api.so
+/usr/lib/pkgconfig/bluetooth-share-api.pc
+%else
 %{_libdir}/libbluetooth-share-api.so
 %{_libdir}/pkgconfig/bluetooth-share-api.pc
+%endif
