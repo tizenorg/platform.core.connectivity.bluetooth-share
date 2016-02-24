@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <notification.h>
-#include <sysman.h>
 #include <aul.h>
 #include <vconf.h>
 #include <bundle_internal.h>

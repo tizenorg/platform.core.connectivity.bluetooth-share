@@ -17,7 +17,7 @@
  *
  */
 
-#include <pmapi.h>
+#include <dd-display.h>
 #include <glib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -62,7 +62,7 @@ int _bt_share_block_sleep(gboolean is_block)
 				     block_sleep_count);
 			block_sleep_count = 0;
 		} else if (block_sleep_count == 0) {
-			result = pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
+			result = display_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
 			if (result != 0) {
 				DBG("LCD Lock is failed with result code [%d]\n", result);
 			}
@@ -79,7 +79,7 @@ int _bt_share_block_sleep(gboolean is_block)
 				     block_sleep_count);
 			block_sleep_count = 0;
 		} else if (block_sleep_count == 1) {
-			result = pm_unlock_state(LCD_OFF, PM_RESET_TIMER);
+			result = display_unlock_state(LCD_OFF, PM_RESET_TIMER);
 			if (result != 0) {
 				DBG("LCD Unlock is failed with result code [%d]\n",
 					     result);
