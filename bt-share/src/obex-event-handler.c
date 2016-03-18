@@ -75,6 +75,8 @@ static gboolean isFirstReceivedPacket = FALSE;
 
 static gboolean isTransferConnectedReceived = FALSE;
 
+gboolean __bt_scan_media_file(char *file_path);
+
 void *_bt_obex_writeclose(bt_file_info_t *info);
 
 static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_auth_info);
@@ -784,29 +786,6 @@ static gboolean __bt_get_available_ext_memory(unsigned long long *available_mem_
 	return TRUE;
 }
 
-static gboolean __bt_get_available_memory(long *available_mem_size)
-{
-	struct statfs fs = {0, };
-	int val = -1;
-	char *default_memory = NULL;
-
-	if (-1 == vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
-				(void *)&val)) {
-		ERR("vconf error\n");
-		return FALSE;
-	}
-	if (val == 0) /* Phone memory is 0, MMC is 1 */
-		default_memory = BT_DOWNLOAD_MEDIA_FOLDER;
-	else
-		default_memory = BT_DOWNLOAD_MMC_FOLDER;
-	if (statfs(default_memory, &fs) != 0) {
-		*available_mem_size = 0;
-		return FALSE;
-	}
-	*available_mem_size = fs.f_bavail * (fs.f_bsize/1024);
-	return TRUE;
-}
-
 static gchar *__bt_get_unique_file_name(char *storage_path, char *filename)
 {
 	char temp_filepath[BT_FILE_PATH_LEN_MAX] = { 0, };
@@ -990,7 +969,6 @@ static gboolean __bt_save_v_object(char *file_path,
 					    bt_file_type_t file_type)
 {
 	retv_if(NULL == file_path, FALSE);
-	int ret;
 
 	DBG("file_path = %s, file_type = %d\n", file_path, file_type);
 

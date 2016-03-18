@@ -30,6 +30,8 @@
 #include "obex-event-handler.h"
 #include "bluetooth-share-api.h"
 #include "bt-share-resource.h"
+#include "notification_text_domain.h"
+#include "notification_internal.h"
 
 #define BT_PERCENT_STR_LEN 5
 #define BT_PRIV_ID_STR_LEN 8
@@ -60,7 +62,6 @@ notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_ty
 	notification_h noti = NULL;
 	notification_error_e ret = NOTIFICATION_ERROR_NONE;
 	notification_type_e noti_type = NOTIFICATION_TYPE_NONE;
-	char str[NOTIFICATION_TEXT_LEN_MAX] = { 0 };
 	char *title = NULL;
 	char *content = NULL;
 	char *icon_path = NULL;
@@ -242,7 +243,6 @@ int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
 
 	INFO("Update noti : %d", noti);
 	notification_error_e ret = NOTIFICATION_ERROR_NONE;
-	char str[NOTIFICATION_TEXT_LEN_MAX] = { 0 };
 	int success = 0;
 	int fail = 0;
 
@@ -632,50 +632,6 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 			ad->send_data.tr_success, ad->send_data.tr_fail,
 			ad->recv_data.tr_success, ad->recv_data.tr_fail);
 
-}
-
-static void __bt_noti_changed_cb(void *data, notification_type_e type)
-{
-	DBG("+\n");
-
-	struct bt_appdata *ad = (struct bt_appdata *)data;
-	if (NULL == ad)
-		return;
-
-	notification_error_e noti_err = NOTIFICATION_ERROR_NONE;
-	int count = 0;
-	sqlite3 *db = NULL;
-
-	noti_err = notification_get_count(NOTIFICATION_TYPE_NOTI, BT_SHARE_BIN_PATH,
-			NOTIFICATION_GROUP_ID_NONE, NOTIFICATION_PRIV_ID_NONE, &count);
-	if (noti_err != NOTIFICATION_ERROR_NONE) {
-		return;
-	}
-
-	/* This callback used only for clear button of notification bar. */
-	/* So need to check the clear button of in/outbound list view  */
-	if (count >= 1)
-		return;
-
-	ad->send_data.tr_fail = 0;
-	ad->send_data.tr_success = 0;
-	ad->recv_data.tr_fail = 0;
-	ad->recv_data.tr_success = 0;
-
-	db = bt_share_open_db();
-	if (!db)
-		return;
-
-	bt_share_remove_tr_data_by_notification(db, BT_DB_INBOUND);
-	bt_share_remove_tr_data_by_notification(db, BT_DB_OUTBOUND);
-	DBG("DB record of notification was removed\n");
-
-	ad->send_noti = NULL;
-	ad->receive_noti = NULL;
-
-	bt_share_close_db(db);
-
-	DBG("-\n");
 }
 
 void _bt_register_notification_cb(struct bt_appdata *ad)

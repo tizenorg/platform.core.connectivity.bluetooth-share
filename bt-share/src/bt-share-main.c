@@ -38,6 +38,7 @@
 #include "bt-share-cynara.h"
 
 #include "bluetooth-share-api.h"
+#include "notification_internal.h"
 
 #define BLUETOOTH_SHARE_BUS		"org.projectx.bluetooth.share"
 
@@ -140,7 +141,7 @@ static void __bt_update_notification_status_values()
 		}
 
 		if ((ad->send_data.tr_success + ad->send_data.tr_fail) != 0) {
-			snprintf(str, sizeof(str), BT_TR_STATUS,
+			snprintf(str, sizeof(str), "%s %d %d", BT_TR_STATUS,
 			ad->send_data.tr_success, ad->send_data.tr_fail);
 
 			noti = _bt_create_notification(BT_NOTI_T);
@@ -178,7 +179,7 @@ static void __bt_update_notification_status_values()
 
 		if ((ad->recv_data.tr_success + ad->recv_data.tr_fail) != 0) {
 
-			snprintf(str, sizeof(str), BT_TR_STATUS,
+			snprintf(str, sizeof(str), "%s %d %d", BT_TR_STATUS,
 				ad->recv_data.tr_success, ad->recv_data.tr_fail);
 			DBG("str = [%s] \n", str);
 
@@ -239,7 +240,7 @@ failed:
 
 }
 
-static int __bt_lang_changed_cb(void *data)
+static int __bt_lang_changed_cb(void *data, void *user_data)
 {
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
@@ -317,8 +318,6 @@ int main(void)
 	app_state = &ad;
 
 	signal(SIGTERM, __bt_sigterm_handler);
-
-	g_type_init();
 
 	if (__bt_dbus_request_name() == FALSE) {
 		DBG("Aleady dbus instance existed\n");

@@ -31,7 +31,9 @@ extern "C" {
 #define BT_DOWNLOAD_PHONE_FOLDER "/opt/usr/media/Downloads"
 #define BT_DOWNLOAD_MMC_FOLDER "/opt/storage/sdcard/Downloads"
 #define BT_DOWNLOAD_MEDIA_FOLDER tzplatform_getenv(TZ_USER_CONTENT)
+/*
 #define BT_FTP_FOLDER tzplatform_mkpath(TZ_SYS_SHARE, "bt-ftp")
+*/
 
 #define BT_DOWNLOAD_PHONE_ROOT "/opt/usr/media"
 #define BT_DOWNLOAD_MMC_ROOT "/opt/storage/sdcard"

@@ -49,8 +49,7 @@ DBusConnection *dbus_connection = NULL;
 extern struct bt_appdata *app_state;
 
 static void __bt_create_send_data(opc_transfer_info_t *node);
-static void __bt_create_send_failed_data(char *filepath, char *dev_name,
-								char *addr, char *type, unsigned int size);
+
 static void __bt_share_update_tr_info(int tr_uid, int tr_type);
 
 static void __bt_tr_data_free(bt_tr_data_t *data)
@@ -572,42 +571,6 @@ static char *__bt_conv_addr_type_to_addr_string(char *addr)
 	return g_strdup(address);
 }
 
-static void __bt_create_send_failed_data(char *filepath, char *dev_name,
-		char *addr, char *type, unsigned int size)
-{
-	int session_id;
-	sqlite3 *db = NULL;
-
-	db = bt_share_open_db();
-	if (!db)
-		return;
-
-	session_id = bt_share_get_last_session_id(db, BT_DB_OUTBOUND);
-
-	INFO("Last session id = %d", session_id);
-
-	bt_tr_data_t *tmp;
-	tmp = g_malloc0(sizeof(bt_tr_data_t));
-	if(tmp == NULL)
-		return;
-
-	tmp->tr_status = BT_TR_FAIL;
-	tmp->sid = session_id + 1;
-	tmp->file_path = g_strdup(filepath);
-	tmp->content = g_strdup(filepath);
-	tmp->dev_name = g_strdup(dev_name);
-	tmp->type = g_strdup(type);
-	tmp->timestamp = __bt_get_current_timedata();
-	tmp->addr = __bt_conv_addr_type_to_addr_string(addr);
-	tmp->size = size;
-	bt_share_add_tr_data(db, BT_DB_OUTBOUND, tmp);
-	__bt_tr_data_free(tmp);
-
-	bt_share_close_db(db);
-
-	return;
-}
-
 static void __bt_create_send_data(opc_transfer_info_t *node)
 {
 	DBG("__bt_create_send_data  \n");
@@ -767,7 +730,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 				return;
 
 			if ((ad->send_data.tr_success + ad->send_data.tr_fail) != 0) {
-				snprintf(str, sizeof(str), BT_TR_STATUS,
+				snprintf(str, sizeof(str), "%s %d %d", BT_TR_STATUS,
 					ad->send_data.tr_success, ad->send_data.tr_fail);
 
 				_bt_update_notification(ad, ad->send_noti,
@@ -807,7 +770,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 				return;
 
 			if ((ad->recv_data.tr_success + ad->recv_data.tr_fail) != 0) {
-				snprintf(str, sizeof(str), BT_TR_STATUS,
+				snprintf(str, sizeof(str), "%s %d %d", BT_TR_STATUS,
 					ad->recv_data.tr_success, ad->recv_data.tr_fail);
 
 				_bt_update_notification(ad, ad->receive_noti,

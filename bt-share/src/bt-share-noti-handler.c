@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <vconf.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>
@@ -28,7 +29,8 @@
 #include "bluetooth-api.h"
 #include "bt-share-noti-handler.h"
 #include "bt-share-main.h"
-
+#include "obex-event-handler.h"
+#include "bt-share-notification.h"
 
 static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 {
@@ -45,8 +47,8 @@ static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 	if (vconf_keynode_get_type(node) == VCONF_TYPE_INT) {
 		/* Phone memory is 0, MMC is 1 */
 		default_memory = vconf_keynode_get_int(node);
-		root_path = default_memory ? BT_DOWNLOAD_MMC_FOLDER : BT_DOWNLOAD_MEDIA_FOLDER;
-		download_path = default_memory ? BT_DOWNLOAD_MMC_FOLDER : BT_DOWNLOAD_PHONE_FOLDER;
+		root_path = default_memory ? (char *)BT_DOWNLOAD_MMC_FOLDER : (char *)BT_DOWNLOAD_MEDIA_FOLDER;
+		download_path = default_memory ? (char *)BT_DOWNLOAD_MMC_FOLDER : (char *)BT_DOWNLOAD_PHONE_FOLDER;
 
 		if (access(download_path, W_OK) != 0) {
 			if (mkdir(download_path, 0755) < 0) {
