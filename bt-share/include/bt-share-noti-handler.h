@@ -24,13 +24,15 @@
 extern "C" {
 #endif
 
-#define STORAGE_PATH_LEN_MAX 30
+#define STORAGE_PATH_LEN_MAX 255
 #define BT_DEFAULT_MEM_PHONE 0
 #define BT_DEFAULT_MEM_MMC 1
 
 #define BT_DOWNLOAD_PHONE_FOLDER "/opt/usr/media/Downloads"
 #define BT_DOWNLOAD_MMC_FOLDER "/opt/storage/sdcard/Downloads"
-#define BT_DOWNLOAD_MEDIA_FOLDER tzplatform_getenv(TZ_USER_CONTENT)
+#define BT_DOWNLOAD_MEDIA_FOLDER "/opt/home/owner/content/Downloads"
+//#define BT_DOWNLOAD_MEDIA_FOLDER tzplatform_getenv(TZ_USER_CONTENT)
+
 /*
 #define BT_FTP_FOLDER tzplatform_mkpath(TZ_SYS_SHARE, "bt-ftp")
 */

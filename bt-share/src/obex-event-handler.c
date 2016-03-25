@@ -717,12 +717,12 @@ void _bt_get_default_storage(char *storage)
 		return;
 	}
 
-	if (mkdir(BT_DOWNLOAD_PHONE_FOLDER, 0755) < 0) {
+	if (mkdir(BT_DOWNLOAD_MEDIA_FOLDER, 0755) < 0) {
 		err = -errno;
 		DBG("mkdir: %s(%d)", strerror(-err), -err);
 	}
 
-	g_strlcpy(storage, BT_DOWNLOAD_PHONE_FOLDER, STORAGE_PATH_LEN_MAX);
+	g_strlcpy(storage, BT_DOWNLOAD_MEDIA_FOLDER, STORAGE_PATH_LEN_MAX);
 
 	DBG("Default storage : %s\n", storage);
 }
