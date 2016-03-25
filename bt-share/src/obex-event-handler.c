@@ -735,9 +735,9 @@ void _bt_app_obex_download_dup_file_cb(void *data, void *obj,
 	char storage[STORAGE_PATH_LEN_MAX] = { 0, };
 	char temp_filename[BT_FILE_PATH_LEN_MAX] = { 0, };
 
-	DBG("response : %d\n", (int)event_info);
+	DBG("response : %d\n", (int)(uintptr_t)event_info);
 
-	if ((int)event_info == POPUP_RESPONSE_OK) {
+	if ((int)(uintptr_t)event_info == POPUP_RESPONSE_OK) {
 		DBG("OK button pressed \n");
 
 		_bt_get_default_storage(storage);
@@ -752,7 +752,7 @@ void _bt_app_obex_download_dup_file_cb(void *data, void *obj,
 
 		DBG("temp_filename %s", temp_filename);
 		bluetooth_obex_server_accept_authorize(server_auth_info->filename);
-	} else if ((int)event_info == POPUP_RESPONSE_CANCEL) {
+	} else if ((int)(uintptr_t)event_info == POPUP_RESPONSE_CANCEL) {
 		bluetooth_obex_server_reject_authorize();
 	}
 	return;
