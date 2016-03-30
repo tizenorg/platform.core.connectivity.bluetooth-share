@@ -25,6 +25,8 @@
 
 #define BT_SHARE_PRIVILEGE "http://tizen.org/privilege/bluetooth"
 
+/* #define CYNARA_ENABLE 1 */
+
 typedef struct
 {
 	pid_t pid;

@@ -272,9 +272,12 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 	int ret;
 	char *member;
 	struct bt_appdata *ad = app_state;
-	const char *sender;
 	const char *path = dbus_message_get_path(msg);
+
+#ifdef CYNARA_ENABLE
+	const char *sender;
 	bt_share_cynara_creds sender_creds;
+#endif
 
 	if (dbus_message_get_type(msg) != DBUS_MESSAGE_TYPE_SIGNAL)
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -285,13 +288,6 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 	member = (char *)dbus_message_get_member(msg);
 	DBG("member (%s)\n", member);
 
-	sender = dbus_message_get_sender(msg);
-	ret = _bt_share_cynara_get_creds(sys_conn, sender, &sender_creds);
-	if (ret != 0) {
-		ERR("acquiring cynara creds failed\n");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	}
-
 	if (dbus_message_is_signal(msg, BT_SYSPOPUP_INTERFACE, BT_SYSPOPUP_METHOD_RESPONSE)) {
 		int res = 0;
 		dbus_message_get_args(msg, NULL,
@@ -301,11 +297,19 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 	} else if (dbus_message_is_signal(msg, BT_UG_IPC_INTERFACE, BT_UG_IPC_METHOD_SEND)) {
 		opc_transfer_info_t *node;
 
+#ifdef CYNARA_ENABLE
+		sender = dbus_message_get_sender(msg);
+		ret = _bt_share_cynara_get_creds(sys_conn, sender, &sender_creds);
+		if (ret != 0) {
+			ERR("acquiring cynara creds failed\n");
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+
 		if (_bt_share_cynara_check(&sender_creds, BT_SHARE_PRIVILEGE) != BT_SHARE_FAIL) {
 			ERR("Cynara denied file send\n");
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
-
+#endif
 		node = __add_transfer_info(msg);
 		if (node == NULL)
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -348,11 +352,19 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 				BT_SHARE_UI_SIGNAL_SEND_FILE)) {
 		opc_transfer_info_t *node;
 
+#ifdef CYNARA_ENABLE
+		sender = dbus_message_get_sender(msg);
+		ret = _bt_share_cynara_get_creds(sys_conn, sender, &sender_creds);
+		if (ret != 0) {
+			ERR("acquiring cynara creds failed\n");
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
+
 		if (_bt_share_cynara_check(&sender_creds, BT_SHARE_PRIVILEGE) != BT_SHARE_FAIL) {
 			ERR("Cynara denied file send\n");
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
-
+#endif
 		node = __add_transfer_info(msg);
 		if (node == NULL)
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
