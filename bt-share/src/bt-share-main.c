@@ -37,6 +37,10 @@
 #include "bt-share-common.h"
 #include "bt-share-cynara.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <grp.h>
+
 #include "bluetooth-share-api.h"
 #include "notification_internal.h"
 
@@ -332,6 +336,15 @@ int main(void)
 	/* init internationalization */
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
+
+	uid_t network_user = 551; /* uid of network_fw */
+	gid_t network_group = 551; /* gid of network_fw */
+
+	initgroups("network_fw", network_group);
+	ret = setgid(network_group);
+	DBG("setgid return : %d", ret);
+	ret = setuid(network_user);
+	DBG("setuid return : %d", ret);
 
 	if (_bt_share_cynara_init()) {
 		ERR("Failed to initialize Cynara.\n");
