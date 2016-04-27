@@ -782,7 +782,7 @@ static gboolean __bt_get_available_ext_memory(unsigned long long *available_mem_
 		*available_mem_size = 0;
 		return FALSE;
 	}
-	*available_mem_size = fs.f_bavail * (fs.f_bsize);
+	*available_mem_size = ((unsigned long long)fs.f_bavail) * ((unsigned long long)fs.f_bsize);
 	return TRUE;
 }
 
