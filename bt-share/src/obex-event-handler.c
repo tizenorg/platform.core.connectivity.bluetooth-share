@@ -719,7 +719,7 @@ void _bt_get_default_storage(char *storage)
 
 	if (mkdir(BT_DOWNLOAD_MEDIA_FOLDER, 0755) < 0) {
 		err = -errno;
-		DBG("mkdir: %s(%d)", strerror(-err), -err);
+		DBG("mkdir: %d", -err);
 	}
 
 	g_strlcpy(storage, BT_DOWNLOAD_MEDIA_FOLDER, STORAGE_PATH_LEN_MAX);
