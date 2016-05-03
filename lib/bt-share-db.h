@@ -24,12 +24,12 @@
 extern "C" {
 #endif
 
-#define BT_TRANSFER_DB		"/opt/usr/dbspace/.bluetooth_transfer.db"
+#define BT_TRANSFER_DB		"/opt/dbspace/.bluetooth_transfer.db"
 #define BT_INBOUND_TABLE	"inbound"
 #define BT_OUTBOUND_TABLE	"outbound"
 #define BT_DB_QUERY_LEN		512
 
-#define SCRIPT_INIT_DB		tzplatform_mkpath(TZ_SYS_SHARE, "bluetooth-share/resources/init_db.sh")
+#define SCRIPT_INIT_DB		tzplatform_mkpath(TZ_USER_DATA, "bluetooth-share/init_db.sh")
 
 #define TABLE(type) ((type == BT_DB_INBOUND) ? BT_INBOUND_TABLE : BT_OUTBOUND_TABLE)
 #define TEXT(s, n) (char *)sqlite3_column_text(s, n)

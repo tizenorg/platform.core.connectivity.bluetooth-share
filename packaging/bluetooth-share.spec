@@ -1,4 +1,4 @@
-%define TZ_SYS_SHARE /opt
+%define TZ_SYS_SHARE /opt/home/owner/data/
 
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
@@ -81,7 +81,11 @@ make
 %make_install
 
 mkdir -p  %{buildroot}%{TZ_SYS_SHARE}/bt-ftp
-install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/ressources/init_db.sh
+install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_SHARE}/%{name}/init_db.sh
+
+%post
+/sbin/ldconfig
+%{TZ_SYS_SHARE}/%{name}/init_db.sh
 
 %post -n libbluetooth-share-devel -p /sbin/ldconfig
 

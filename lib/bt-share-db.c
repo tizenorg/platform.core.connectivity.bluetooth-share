@@ -65,6 +65,7 @@ sqlite3 *__bt_db_open(void)
 	if (ret == -1 && errno == ENOENT)
 	{
 		DBG("DB %s doesn't exist, it needs to be created and initialized", BT_TRANSFER_DB);
+		DBG("script path: %s", SCRIPT_INIT_DB);
 		ret = system(SCRIPT_INIT_DB);
 		if (ret != EXIT_SUCCESS)
 			ERR("Exit code of epp not clean: %i", ret);

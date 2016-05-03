@@ -28,8 +28,8 @@ extern "C" {
 #include <tzplatform_config.h>
 
 /*==============  String ================= */
-#define BT_COMMON_PKG		"ug-bluetooth-efl"
-#define BT_COMMON_RES		"/usr/apps/ug-bluetooth-efl/shared/res/locale"
+#define BT_COMMON_PKG		"ug-setting-bluetooth-efl"
+#define BT_COMMON_RES		"/usr/ug/res/locale/"
 
 #define BT_STR_MEMORY_FULL	\
 	dgettext(BT_COMMON_PKG, "IDS_BT_POP_MEMORYFULL")
