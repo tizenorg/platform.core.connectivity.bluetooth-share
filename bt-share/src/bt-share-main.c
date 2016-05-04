@@ -22,6 +22,8 @@
 #include <string.h>
 #include <appcore-efl.h>
 #include <vconf.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>
@@ -36,6 +38,8 @@
 #include "bt-share-notification.h"
 #include "bt-share-common.h"
 #include "bt-share-cynara.h"
+#include "bt-share-db.h"
+
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -313,6 +317,23 @@ void _bt_terminate_app(void)
 	}
 }
 
+void __bt_create_transfer_db(void)
+{
+	struct stat sts;
+	int ret;
+
+	/* Check if the DB exists; if not, create it and initialize it */
+	ret = stat(BT_TRANSFER_DB, &sts);
+	if (ret == -1 && errno == ENOENT)
+	{
+		DBG("DB %s doesn't exist, it needs to be created and initialized", BT_TRANSFER_DB);
+		DBG("script path: %s", SCRIPT_INIT_DB);
+		ret = system(SCRIPT_INIT_DB);
+		if (ret != EXIT_SUCCESS)
+			ERR("Exit code of epp not clean: %i", ret);
+	}
+}
+
 int main(void)
 {
 	int ret;
@@ -322,6 +343,8 @@ int main(void)
 	app_state = &ad;
 
 	signal(SIGTERM, __bt_sigterm_handler);
+
+	__bt_create_transfer_db();
 
 	if (__bt_dbus_request_name() == FALSE) {
 		DBG("Aleady dbus instance existed\n");
