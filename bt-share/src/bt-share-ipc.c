@@ -17,6 +17,8 @@
  *
  */
 
+#include <dbus/dbus-glib-lowlevel.h>
+#include <dbus/dbus-glib.h>
 #include <dbus/dbus.h>
 #include <glib.h>
 #include <time.h>
@@ -419,22 +421,20 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 gboolean _bt_init_dbus_signal(void)
 {
 	DBG("+");
+	DBusGConnection *conn;
+	GError *err = NULL;
 	DBusError dbus_error;
 
-	dbus_error_init(&dbus_error);
-
-	dbus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
-
-	if (!dbus_connection) {
+	conn = dbus_g_bus_get(DBUS_BUS_SYSTEM, &err);
+	if (!conn) {
 		ERR(" DBUS get failed");
-		if (dbus_error_is_set(&dbus_error)) {
-			ERR("D-Bus Error: %s\n", dbus_error.message);
-			dbus_error_free(&dbus_error);
-		}
+		g_error_free(err);
 		return FALSE;
 	}
+	dbus_connection = dbus_g_connection_get_connection(conn);
 
 	/* Add the filter for network client functions */
+	dbus_error_init(&dbus_error);
 	dbus_connection_add_filter(dbus_connection, __event_filter, NULL, NULL);
 	dbus_bus_add_match(dbus_connection,
 			"type=signal,interface=" BT_BLUEZ_INTERFACE
