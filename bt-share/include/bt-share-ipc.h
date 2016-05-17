@@ -109,7 +109,7 @@ typedef struct {
 	char *mode;
 	char **file_path;
 	char **content;
-	char *type;
+	char **type;
 	unsigned int *size;
 } opc_transfer_info_t;
 

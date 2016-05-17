@@ -22,6 +22,7 @@
 #include <dbus/dbus.h>
 #include <glib.h>
 #include <time.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include <notification.h>
@@ -49,7 +50,8 @@ DBusConnection *dbus_connection = NULL;
 extern struct bt_appdata *app_state;
 
 static void __bt_create_send_data(opc_transfer_info_t *node);
-
+static void __bt_create_send_failed_data(char *filepath, char *dev_name,
+						char *addr, char *type, unsigned int size);
 static void __bt_share_update_tr_info(int tr_uid, int tr_type);
 
 static void __bt_tr_data_free(bt_tr_data_t *data)
@@ -96,78 +98,150 @@ static void __popup_res_cb(int res)
 	DBG("-\n");
 }
 
-
 static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 {
-	int reserved = 0;
+	DBG("+");
+	int i = 0;
 	int cnt = 0;
-	char *addr = NULL;
-	int len;
-	char *filepath = NULL;
-	char *mode = NULL;
+	char addr[BLUETOOTH_ADDRESS_LENGTH] = { 0, };
 	char *name = NULL;
 	char *type = NULL;
+	char byte;
+	char *file_path = NULL;
+	char mime_type[BT_MIME_TYPE_MAX_LEN] = { 0 };
+	unsigned int file_size=0;
+	struct stat file_attr;
+	int len;
 	opc_transfer_info_t *data;
-	int i = 0;
-	char *token = NULL;
-	char *ptr = NULL;
+	struct bt_appdata *ad = app_state;
+	DBusMessageIter iter;
+	DBusMessageIter iter_addr;
+	DBusMessageIter iter_file;
+	DBusMessageIter iter_filepath;
+	GSList *list = NULL;
 
 	retv_if(msg == NULL, NULL);
-	dbus_message_get_args(msg, NULL,
-				DBUS_TYPE_INT32, &reserved,
-				DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE,
-				&addr, &len,
-				DBUS_TYPE_INT32, &cnt,
-				DBUS_TYPE_STRING, &filepath,
-				DBUS_TYPE_STRING, &mode,
-				DBUS_TYPE_STRING, &name,
-				DBUS_TYPE_STRING, &type,
-				DBUS_TYPE_INVALID);
 
-	retv_if(cnt <= 0, NULL);
-	retv_if(addr == NULL, NULL);
-	retv_if(filepath == NULL, NULL);
-	retv_if(name == NULL, NULL);
+	dbus_message_iter_init(msg, &iter);
+	dbus_message_iter_recurse(&iter, &iter_addr);
 
-	DBG("reserved ( %d )\n", reserved);
-	DBG("%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X", addr[0],
-	     addr[1], addr[2], addr[3], addr[4], addr[5]);
-	DBG(" cnt( %d )\n", cnt);
-	DBG(" filepath( %s )\n", filepath);
-	DBG(" mode ( %s )\n", mode);
-	DBG(" name ( %s )\n", name);
-	DBG(" type ( %s )\n", type);
+	while (dbus_message_iter_get_arg_type(&iter_addr) == DBUS_TYPE_BYTE) {
+		dbus_message_iter_get_basic(&iter_addr, &byte);
+		addr[i] = byte;
+		i++;
+		dbus_message_iter_next(&iter_addr);
+	}
+
+	dbus_message_iter_next(&iter);
+	dbus_message_iter_get_basic(&iter, &name);
+	dbus_message_iter_next(&iter);
+	dbus_message_iter_get_basic(&iter, &type);
+
+	dbus_message_iter_next(&iter);
+	dbus_message_iter_recurse(&iter, &iter_file);
+
+	while (dbus_message_iter_get_arg_type(&iter_file) == DBUS_TYPE_ARRAY) {
+		i = 0;
+		dbus_message_iter_recurse(&iter_file, &iter_filepath);
+		len = dbus_message_iter_get_array_len(&iter_filepath);
+		if (len <= 0)
+			continue;
+
+		file_path = g_malloc0(len + 1);
+		if (file_path == NULL) {
+			ERR("Not enough memory!");
+			return NULL;
+		}
+
+		while (dbus_message_iter_get_arg_type(&iter_filepath) ==
+		       DBUS_TYPE_BYTE) {
+			dbus_message_iter_get_basic(&iter_filepath, &byte);
+			file_path[i] = byte;
+			i++;
+			dbus_message_iter_next(&iter_filepath);
+		}
+		if (aul_get_mime_from_file(file_path, mime_type,
+				BT_MIME_TYPE_MAX_LEN) == AUL_R_OK)
+			INFO("mime type = %s", mime_type);
+		if (g_utf8_validate(file_path, -1, NULL)) {
+			if (stat(file_path, &file_attr) == 0)
+				file_size = file_attr.st_size;
+			else
+				file_size = 0;
+			INFO("%d", file_size);
+
+			list = g_slist_append(list, file_path);
+		} else {
+			DBG("Invalid filepath");
+			ad->send_data.tr_fail++;
+			__bt_create_send_failed_data(file_path, name, addr,
+								mime_type, file_size);
+
+			if (ad->send_noti == NULL) {
+				ad->send_noti = _bt_insert_notification(ad, BT_SENT_NOTI, 0, 0);
+			} else {
+				_bt_update_notification(ad, ad->send_noti, NULL, NULL, NULL);
+			}
+
+			g_free(file_path);
+		}
+
+		dbus_message_iter_next(&iter_file);
+	}
+
+	cnt = g_slist_length(list);
+	INFO("cnt = %d", cnt);
+
+	if (cnt == 0) {
+		/* Show unable to send popup */
+		_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL,
+			BT_STR_UNABLE_TO_SEND);
+		return NULL;
+	}
+
+	INFO("%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X", addr[0],
+	    addr[1], addr[2], addr[3], addr[4], addr[5]);
+	INFO(" cnt( %d )", cnt);
 
 	data = g_new0(opc_transfer_info_t, 1);
-
 	data->content = g_new0(char *, cnt + 1);
 	data->file_path = g_new0(char *, cnt + 1);
 	data->file_cnt = cnt;
+	data->type = g_new0(char *, cnt + 1);
+	data->size = (unsigned int *)g_new0(unsigned int *, cnt + 1);
 	memcpy(data->addr, addr, BLUETOOTH_ADDRESS_LENGTH);
 	memcpy(data->name, name, BLUETOOTH_DEVICE_NAME_LENGTH_MAX);
-	data->type = g_strdup(type);
 
-	token = strtok_r(filepath, FILE_PATH_DELIM, &ptr);
-	while ((token != NULL) && (i < cnt)) {
-		if (g_strcmp0(type, "text") == 0) {
-			data->file_path[i] = _bt_share_create_transfer_file(token);
-		} else {
-			data->file_path[i] = g_strdup(token);
+	for (i = 0; i < cnt; i++) {
+		char *ptr = g_slist_nth_data(list, i);
+		if (g_strcmp0(type, "text") == 0)
+			data->file_path[i] = _bt_share_create_transfer_file(ptr);
+		else
+			data->file_path[i] = g_strdup(ptr);
+
+		if(aul_get_mime_from_file(data->file_path[i], mime_type,
+			BT_MIME_TYPE_MAX_LEN) == AUL_R_OK) {
+			g_free(data->type[i]);
+			data->type[i] = g_strdup(mime_type);
 		}
 
-		DBG(" file path ( %s )\n", data->file_path[i]);
+		if (stat(data->file_path[i], &file_attr) == 0)
+			file_size = file_attr.st_size;
+		else
+			file_size = 0;
 
-		data->content[i] = g_strdup(token);
-		DBG("Content [%d] [%s]\n", i, data->content[i]);
-		i++;
-
-		token = strtok_r(NULL, FILE_PATH_DELIM, &ptr);
+		data->size[i] = file_size;
+		data->content[i] = g_strdup(ptr);
+		INFO(" type ( %s ), size (%d)", data->type[i], data->size[i]);
 	}
 
 	bt_transfer_list = g_slist_append(bt_transfer_list, data);
 
+	g_slist_free_full(list, g_free);
+
 	return data;
 }
+
 
 
 void _free_transfer_info(opc_transfer_info_t *node)
@@ -583,6 +657,42 @@ static char *__bt_conv_addr_type_to_addr_string(char *addr)
 	return g_strdup(address);
 }
 
+static void __bt_create_send_failed_data(char *filepath, char *dev_name,
+					 char *addr, char *type, unsigned int size)
+{
+	int session_id;
+	sqlite3 *db = NULL;
+
+	db = bt_share_open_db();
+	if (!db)
+		return;
+
+	session_id = bt_share_get_last_session_id(db, BT_DB_OUTBOUND);
+
+	INFO("Last session id = %d", session_id);
+
+	bt_tr_data_t *tmp;
+	tmp = g_malloc0(sizeof(bt_tr_data_t));
+	if(tmp == NULL)
+		return;
+
+	tmp->tr_status = BT_TR_FAIL;
+	tmp->sid = session_id + 1;
+	tmp->file_path = g_strdup(filepath);
+	tmp->content = g_strdup(filepath);
+	tmp->dev_name = g_strdup(dev_name);
+	tmp->type = g_strdup(type);
+	tmp->timestamp = __bt_get_current_timedata();
+	tmp->addr = __bt_conv_addr_type_to_addr_string(addr);
+	tmp->size = size;
+	bt_share_add_tr_data(db, BT_DB_OUTBOUND, tmp);
+	__bt_tr_data_free(tmp);
+
+	bt_share_close_db(db);
+
+	return;
+}
+
 static void __bt_create_send_data(opc_transfer_info_t *node)
 {
 	DBG("__bt_create_send_data  \n");
@@ -615,7 +725,7 @@ static void __bt_create_send_data(opc_transfer_info_t *node)
 
 		tmp->content = g_strdup(node->content[count]);
 		tmp->dev_name =  g_strdup(node->name);
-		tmp->type =  g_strdup(node->type);
+		tmp->type =  g_strdup(node->type[count]);
 		tmp->timestamp = __bt_get_current_timedata();
 		tmp->addr = __bt_conv_addr_type_to_addr_string(node->addr);
 		tmp->size = node->size[count];
