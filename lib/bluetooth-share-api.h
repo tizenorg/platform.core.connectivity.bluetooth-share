@@ -30,7 +30,7 @@ extern "C" {
 #define EXPORT_API __attribute__((visibility("default")))
 #endif
 
-enum {
+typedef enum {
 	BT_SHARE_ERR_NONE = 0,
 	BT_SHARE_ERR_INTERNAL = -1,
 	BT_SHARE_ERR_INVALID_PARAM = -2,
