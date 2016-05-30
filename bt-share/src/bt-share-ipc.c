@@ -108,7 +108,7 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 	char byte;
 	char *file_path = NULL;
 	char mime_type[BT_MIME_TYPE_MAX_LEN] = { 0 };
-	unsigned int file_size=0;
+	unsigned int file_size = 0;
 	struct stat file_attr;
 	int len;
 	opc_transfer_info_t *data;
@@ -218,7 +218,7 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 		else
 			data->file_path[i] = g_strdup(ptr);
 
-		if(aul_get_mime_from_file(data->file_path[i], mime_type,
+		if (aul_get_mime_from_file(data->file_path[i], mime_type,
 			BT_MIME_TYPE_MAX_LEN) == AUL_R_OK) {
 			g_free(data->type[i]);
 			data->type[i] = g_strdup(mime_type);
@@ -390,7 +390,7 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		ret = _request_file_send(node);
 		if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
 			DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
-		} else if ( ret != BLUETOOTH_ERROR_NONE) {
+		} else if (ret != BLUETOOTH_ERROR_NONE) {
 			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL, BT_STR_UNABLE_TO_SEND);
 			g_slist_free_full(bt_transfer_list,
 						(GDestroyNotify)_free_transfer_info);
@@ -445,7 +445,7 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		ret = _request_file_send(node);
 		if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
 			DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
-		} else if ( ret != BLUETOOTH_ERROR_NONE) {
+		} else if (ret != BLUETOOTH_ERROR_NONE) {
 			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL, BT_STR_UNABLE_TO_SEND);
 			g_slist_free_full(bt_transfer_list,
 							(GDestroyNotify)_free_transfer_info);
@@ -589,7 +589,7 @@ void _bt_create_warning_popup(int error_type, char *msg)
 		char str[BT_TEXT_LEN_MAX] = { 0, };
 		bundle *b;
 
-		DBG("error_type: %d",error_type);
+		DBG("error_type: %d", error_type);
 		switch (error_type) {
 			case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
 			case BLUETOOTH_ERROR_NOT_CONNECTED:
@@ -678,7 +678,7 @@ static void __bt_create_send_failed_data(char *filepath, char *dev_name,
 
 	bt_tr_data_t *tmp;
 	tmp = g_malloc0(sizeof(bt_tr_data_t));
-	if(tmp == NULL)
+	if (tmp == NULL)
 		return;
 
 	tmp->tr_status = BT_TR_FAIL;
@@ -798,7 +798,7 @@ gboolean _bt_add_recv_transfer_status_data(char *device_name,
 		return FALSE;
 
 	tmp = g_malloc0(sizeof(bt_tr_data_t));
-	if(tmp == NULL)
+	if (tmp == NULL)
 		return FALSE;
 
 	tmp->tr_status = status;

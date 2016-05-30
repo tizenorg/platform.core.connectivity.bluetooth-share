@@ -38,8 +38,7 @@ int _bt_share_cynara_init(void)
 	int ret;
 
 	ret = cynara_initialize(&_cynara, NULL);
-	if (ret != CYNARA_API_SUCCESS)
-	{
+	if (ret != CYNARA_API_SUCCESS) {
 		cynara_strerror(ret, error_msg, error_msg_size);
 		ERR("cynara_initialize failed: %s\n", error_msg);
 		return BT_SHARE_FAIL;

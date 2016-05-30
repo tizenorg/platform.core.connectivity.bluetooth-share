@@ -239,7 +239,7 @@ notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_ty
 int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
 		char *title, char *content, char *icon_path)
 {
-	retvm_if (!noti, BT_SHARE_FAIL, "noti is NULL");
+	retvm_if(!noti, BT_SHARE_FAIL, "noti is NULL");
 
 	INFO("Update noti : %d", noti);
 	notification_error_e ret = NOTIFICATION_ERROR_NONE;
@@ -274,7 +274,7 @@ int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
 	}
 
 	if (content) {
-		if (noti == ad->send_noti|| noti == ad->receive_noti) {
+		if (noti == ad->send_noti || noti == ad->receive_noti) {
 			if (success == 1)
 				ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
 						NULL, content,
@@ -479,7 +479,7 @@ int _bt_set_notification_property(notification_h noti, int flag)
 	return ret;
 }
 
-gboolean _bt_update_notification_status(struct bt_appdata *ad )
+gboolean _bt_update_notification_status(struct bt_appdata *ad)
 {
 	notification_h noti = NULL;
 	notification_list_h list_head = NULL;
@@ -493,7 +493,7 @@ gboolean _bt_update_notification_status(struct bt_appdata *ad )
 	int priv_id = 0;
 	int ret;
 
-	retv_if (ad == NULL, FALSE);
+	retv_if(ad == NULL, FALSE);
 
 	/* When bt-share is launched, need to update notification status  */
 
@@ -564,7 +564,7 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 {
 	DBG("__bt_notification_changed_cb");
 
-	retm_if (data == NULL, "Invalid data");
+	retm_if(data == NULL, "Invalid data");
 	struct bt_appdata *ad = (struct bt_appdata *)data;
 	gboolean is_sent_noti_exist = FALSE;
 	gboolean is_received_noti_exist = FALSE;
@@ -575,7 +575,7 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 	int priv_id;
 	sqlite3 *db = NULL;
 
-	retm_if (op_list == NULL, "Invalid op_list");
+	retm_if(op_list == NULL, "Invalid op_list");
 
 	if (type != NOTIFICATION_TYPE_NOTI ||
 			(op_list->type != NOTIFICATION_OP_DELETE &&
@@ -586,7 +586,7 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 		return;
 
 	noti_err = notification_get_list(type, -1, &noti_list);
-	ret_if (noti_err != NOTIFICATION_ERROR_NONE);
+	ret_if(noti_err != NOTIFICATION_ERROR_NONE);
 
 	noti_list = notification_list_get_head(noti_list);
 	while (noti_list) {

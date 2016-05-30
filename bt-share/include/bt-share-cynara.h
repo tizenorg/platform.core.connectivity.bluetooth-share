@@ -27,8 +27,7 @@
 
 /* #define CYNARA_ENABLE 1 */
 
-typedef struct
-{
+typedef struct {
 	pid_t pid;
 	char *uid;
 	char *smack;

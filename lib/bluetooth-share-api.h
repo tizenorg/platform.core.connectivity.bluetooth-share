@@ -35,7 +35,7 @@ enum {
 	BT_SHARE_ERR_INTERNAL = -1,
 	BT_SHARE_ERR_INVALID_PARAM = -2,
 	BT_SHARE_ERR_UNKNOWN = -3
-}bt_share_err_e;
+} bt_share_err_e;
 
 
 typedef struct {
@@ -49,7 +49,7 @@ typedef struct {
 	char *type;
 	char *content;
 	unsigned int size;
-}bt_tr_data_t;
+} bt_tr_data_t;
 
 
 typedef enum {

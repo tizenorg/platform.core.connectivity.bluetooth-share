@@ -171,7 +171,7 @@ void _bt_obex_cancel_transfer(void *data)
 
 		DBG("noti_id : %d", noti_data->noti_id);
 		ret = bluetooth_obex_server_cancel_transfer(noti_data->transfer_id);
-		if(ret != BLUETOOTH_ERROR_NONE) {
+		if (ret != BLUETOOTH_ERROR_NONE) {
 			ERR("bluetooth_obex_server_cancel_transfer[ret:%d]", ret);
 		}
 	}
@@ -510,7 +510,7 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 			INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_STARTED");
 			isFirstReceivedPacket = TRUE;
 			transfer_info = param->param_data;
-			if(transfer_info->file_size > (100 * 1024)) {
+			if (transfer_info->file_size > (100 * 1024)) {
 				if (0 == g_strcmp0(transfer_info->type, TRANSFER_GET)) {
 					/*GET request */
 					noti = _bt_insert_notification(ad, BT_SENDING_NOTI, 0, 0);
@@ -551,7 +551,7 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 
 				if (isFirstReceivedPacket)
 					_bt_update_notification(ad, data->noti_handle, transfer_info->filename, "", NULL);
-				if(data && data->noti_id)
+				if (data && data->noti_id)
 					_bt_update_notification_progress(
 							data->noti_handle,
 							data->noti_id,
@@ -622,7 +622,7 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 				} else {
 					_bt_update_notification(ad, ad->receive_noti, NULL, NULL, NULL);
 				}
-			}else if(0 == g_strcmp0(transfer_info->type, TRANSFER_GET)){
+			} else if (0 == g_strcmp0(transfer_info->type, TRANSFER_GET)) {
 				INFO("TRANSFER_GET");
 			}
 
@@ -845,7 +845,7 @@ static void __bt_app_obex_openwrite_requested(bt_obex_server_authorize_into_t
 
 	regex = g_regex_new("[*\"<>;?|\\^:/]", 0, 0, NULL);
 	name = g_regex_replace(regex, server_auth_info->filename, -1, 0, "_", 0, NULL);
-	g_regex_unref(regex );
+	g_regex_unref(regex);
 	if (g_strcmp0(name, server_auth_info->filename) != 0) {
 		g_free(server_auth_info->filename);
 		server_auth_info->filename = name;
@@ -885,7 +885,7 @@ static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_aut
 		goto reject;
 	}
 
-	INFO("File Length =%ld",server_auth_info->length);
+	INFO("File Length = %ld", server_auth_info->length);
 
 	if (val == BT_DEFAULT_MEM_MMC) {
 		ret = __bt_get_available_ext_memory(&available_ext_mem_size);
@@ -1013,7 +1013,7 @@ static gboolean __bt_save_v_object(char *file_path,
 		if (ret != CALENDAR_ERROR_NONE) {
 			ERR("[error] = %d \n", ret);
 			ret = calendar_disconnect();
-			if ( ret != CALENDAR_ERROR_NONE) {
+			if (ret != CALENDAR_ERROR_NONE) {
 				ERR("calendar_disconnect error = %d \n", ret);
 			}
 			return FALSE;

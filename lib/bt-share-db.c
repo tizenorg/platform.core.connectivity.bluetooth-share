@@ -337,7 +337,7 @@ static int __bt_db_get_record_count(sqlite3 *db, int db_table)
 	return count;
 }
 
-static int __bt_db_delete_record(sqlite3 *db, const char *query )
+static int __bt_db_delete_record(sqlite3 *db, const char *query)
 {
 	int ret = 0;
 	sqlite3_stmt *stmt = NULL;

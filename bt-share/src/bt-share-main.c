@@ -276,7 +276,7 @@ static gboolean __bt_dbus_request_name(void)
 	if (dbus_error_is_set(&err))
 		goto failed;
 
-	if(DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER == ret_code) {
+	if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER == ret_code) {
 		dbus_connection_unref(conn);
 		return TRUE;
 	}
@@ -324,8 +324,7 @@ void __bt_create_transfer_db(void)
 
 	/* Check if the DB exists; if not, create it and initialize it */
 	ret = stat(BT_TRANSFER_DB, &sts);
-	if (ret == -1 && errno == ENOENT)
-	{
+	if (ret == -1 && errno == ENOENT) {
 		DBG("DB %s doesn't exist, it needs to be created and initialized", BT_TRANSFER_DB);
 		DBG("script path: %s", SCRIPT_INIT_DB);
 		ret = system(SCRIPT_INIT_DB);
@@ -352,9 +351,8 @@ int main(void)
 	}
 
 	ret = appcore_set_event_callback(APPCORE_EVENT_LANG_CHANGE, __bt_lang_changed_cb, NULL);
-	if(ret < 0)
+	if (ret < 0)
 		DBG("Failed to excute the change of language");
-
 
 	/* init internationalization */
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)

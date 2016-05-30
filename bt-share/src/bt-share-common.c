@@ -112,16 +112,16 @@ int _bt_set_transfer_indicator(gboolean state)
 		return -1;
 	}
 
-	if(state == TRUE) {
+	if (state == TRUE) {
 		block_cnt++;
-		if(bt_device_state & BT_STATUS_TRANSFER)
+		if (bt_device_state & BT_STATUS_TRANSFER)
 			return 0;
 		bt_device_state |= BT_STATUS_TRANSFER;
 		event_val = EVT_VAL_BT_TRANSFERING;
 	} else {
-		if(block_cnt > 0)
+		if (block_cnt > 0)
 			block_cnt--;
-		if(block_cnt != 0)
+		if (block_cnt != 0)
 			return 0;
 		bt_device_state ^= BT_STATUS_TRANSFER;
 		event_val = EVT_VAL_BT_NON_TRANSFERING;

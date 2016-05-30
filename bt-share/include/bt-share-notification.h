@@ -95,7 +95,7 @@ int _bt_set_notification_app_launch(notification_h noti,
 		const char *progress_cnt,
 		int transfer_id);
 
-gboolean _bt_update_notification_status(struct bt_appdata *ad );
+gboolean _bt_update_notification_status(struct bt_appdata *ad);
 
 void _bt_register_notification_cb(struct bt_appdata *ad);
 

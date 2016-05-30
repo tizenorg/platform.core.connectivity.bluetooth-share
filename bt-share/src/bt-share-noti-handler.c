@@ -40,7 +40,7 @@ static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 
 	DBG("__bt_default_memory_changed_cb\n");
 
-	ret_if (node == NULL);
+	ret_if(node == NULL);
 
 	DBG("key=%s\n", vconf_keynode_get_name(node));
 

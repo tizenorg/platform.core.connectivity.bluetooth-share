@@ -66,7 +66,7 @@ int _bt_launch_system_popup(bt_app_event_type_t event_type,
 	DBG("+\n");
 
 	b = bundle_create();
-	if(b == NULL) {
+	if (b == NULL) {
 		ERR("bundle_create failed");
 		return -1;
 	}
