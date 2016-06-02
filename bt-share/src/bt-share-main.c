@@ -305,7 +305,7 @@ int _bt_init_obex_server(void)
 		return BT_SHARE_FAIL;
 	}
 
-	bluetooth_obex_server_set_root(BT_FTP_FOLDER);
+	bluetooth_obex_server_set_root(storage);
 
 	return BT_SHARE_ERROR_NONE;
 }
@@ -358,10 +358,15 @@ int main(void)
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
 
+	uid_t network_user = 5001; /* uid of owner */
+	gid_t network_group = 100; /* gid of users */
+
+#if 0
 	uid_t network_user = 551; /* uid of network_fw */
 	gid_t network_group = 551; /* gid of network_fw */
-
 	initgroups("network_fw", network_group);
+#endif
+	initgroups("users", network_group);
 	ret = setgid(network_group);
 	DBG("setgid return : %d", ret);
 	ret = setuid(network_user);

@@ -25,6 +25,9 @@
 #include <Ecore_File.h>
 #include <bundle.h>
 #include <eventsystem.h>
+#include <sys/types.h>
+#include <sys/xattr.h>
+#include <linux/xattr.h>
 
 #include "vconf-keys.h"
 #include "applog.h"

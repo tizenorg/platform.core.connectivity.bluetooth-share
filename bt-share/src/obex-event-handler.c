@@ -696,9 +696,9 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 
 void _bt_get_default_storage(char *storage)
 {
-	int val;
-	int err;
-	char *path;
+	int val = BT_DEFAULT_MEM_PHONE;
+	int ret;
+	char *path = NULL;
 
 	if (vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
 						(void *)&val)) {
@@ -706,25 +706,26 @@ void _bt_get_default_storage(char *storage)
 		val = BT_DEFAULT_MEM_PHONE;
 	}
 
-	if (val == BT_DEFAULT_MEM_MMC)
-		path = BT_DOWNLOAD_MMC_FOLDER;
-	else
-		path = BT_DOWNLOAD_PHONE_FOLDER;
+	if (val == BT_DEFAULT_MEM_MMC) {
+		ret = storage_get_directory(STORAGE_TYPE_EXTERNAL,
+					STORAGE_DIRECTORY_DOWNLOADS, &path);
 
-	if (access(path, W_OK) == 0) {
-		g_strlcpy(storage, path, STORAGE_PATH_LEN_MAX);
-		DBG("Storage path = [%s]\n", storage);
-		return;
+		if (ret != STORAGE_ERROR_NONE)
+			DBG("Fail to get the download path: %d", ret);
+
+		if (path == NULL)
+			path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
+	} else {
+		path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
 	}
 
-	if (mkdir(BT_DOWNLOAD_MEDIA_FOLDER, 0755) < 0) {
-		err = -errno;
-		DBG("mkdir: %d", -err);
-	}
-
-	g_strlcpy(storage, BT_DOWNLOAD_MEDIA_FOLDER, STORAGE_PATH_LEN_MAX);
+	g_strlcpy(storage, path, STORAGE_PATH_LEN_MAX);
+	g_free(path);
 
 	DBG("Default storage : %s\n", storage);
+
+	if (access(storage, W_OK) != 0)
+		DBG("Can't access the storage");
 }
 
 

@@ -24,7 +24,8 @@ pkg_check_modules(pkgs REQUIRED glib-2.0 bluetooth-api
 				appsvc appcore-efl storage
 				capi-content-media-content
 				libtzplatform-config eventsystem
-				cynara-creds-dbus cynara-client cynara-session)
+				cynara-creds-dbus cynara-client cynara-session
+				storage)
 pkg_check_modules(CALENDAR_SERVICE2 calendar-service2)
 pkg_check_modules(CONTACTS_SERVICE2 contacts-service2)
 

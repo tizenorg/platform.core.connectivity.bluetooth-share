@@ -41,6 +41,7 @@ BuildRequires:  pkgconfig(cynara-client)
 BuildRequires:  pkgconfig(cynara-session)
 BuildRequires:  pkgconfig(cynara-creds-dbus)
 BuildRequires:  pkgconfig(eventsystem)
+BuildRequires:  pkgconfig(storage)
 
 %description
 Bluetooth File Share Agent

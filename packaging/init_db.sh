@@ -30,8 +30,10 @@ then
 	'
 fi
 
-chown network_fw:network_fw $TZ_SYS_DB/.bluetooth_transfer.db
-chown network_fw:network_fw $TZ_SYS_DB/.bluetooth_transfer.db-journal
+#chown network_fw:network_fw $TZ_SYS_DB/.bluetooth_transfer.db
+#chown network_fw:network_fw $TZ_SYS_DB/.bluetooth_transfer.db-journal
+chown 5001:100 $TZ_SYS_DB/.bluetooth_transfer.db
+chown 5001:100 $TZ_SYS_DB/.bluetooth_transfer.db-journal
 chmod 664 $TZ_SYS_DB/.bluetooth_transfer.db
 chmod 664 $TZ_SYS_DB/.bluetooth_transfer.db-journal
 

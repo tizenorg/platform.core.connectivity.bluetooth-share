@@ -30,7 +30,8 @@ extern "C" {
 #define BT_SHARE_FAIL -1
 #define BT_SHARE_ERROR_NONE 0
 
-#define BT_TMP_DIR "/opt/usr/media/Downloads/.bluetooth/"
+//#define BT_TMP_DIR "/opt/home/owner/content/Downloads/.bluetooth/"
+#define BT_TMP_DIR "/opt/home/owner/content/Downloads/"
 #define BT_TMP_FILE BT_TMP_DIR"bluetooth_content_share"
 #define TXT_FILE_NAME BT_TMP_DIR"bluetooth_content_share.txt"
 #define HTML_FILE_NAME BT_TMP_DIR"bluetooth_content_share.html"
@@ -38,7 +39,8 @@ extern "C" {
 #define HTML_FILE_FORMAT BT_TMP_DIR"bluetooth_content_share%s.html"
 #define HTML_FORMAT "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=UTF-8\"/></head><body><a href=\"%s\">%s</a></body></html>"
 
-#define BT_CONTACT_SHARE_TMP_DIR "/opt/usr/media/Downloads/.bluetooth/"
+//#define BT_CONTACT_SHARE_TMP_DIR "/opt/home/owner/content/Downloads/.bluetooth/"
+#define BT_CONTACT_SHARE_TMP_DIR "/opt/home/owner/content/Downloads/"
 
 typedef enum {
 	BT_HTTP_FILE,

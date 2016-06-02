@@ -21,6 +21,7 @@
 #include <vconf.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <storage.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>
@@ -34,6 +35,7 @@
 
 static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 {
+	int ret;
 	int default_memory = 0;
 	char *root_path = NULL;
 	char *download_path = NULL;
@@ -47,8 +49,29 @@ static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 	if (vconf_keynode_get_type(node) == VCONF_TYPE_INT) {
 		/* Phone memory is 0, MMC is 1 */
 		default_memory = vconf_keynode_get_int(node);
-		root_path = default_memory ? (char *)BT_DOWNLOAD_MMC_FOLDER : (char *)BT_DOWNLOAD_MEDIA_FOLDER;
-		download_path = default_memory ? (char *)BT_DOWNLOAD_MMC_FOLDER : (char *)BT_DOWNLOAD_PHONE_FOLDER;
+
+		if (default_memory == BT_DEFAULT_MEM_MMC) /* MMC */ {
+			ret = storage_get_directory(STORAGE_TYPE_EXTERNAL,
+						STORAGE_DIRECTORY_DOWNLOADS, &download_path);
+
+			if (ret != STORAGE_ERROR_NONE)
+				DBG("Fail to get the download path: %d", ret);
+
+			ret = storage_get_root_directory(STORAGE_TYPE_EXTERNAL, &root_path);
+
+			if (ret != STORAGE_ERROR_NONE)
+				DBG("Fail to get the root path: %d", ret);
+
+			if (download_path == NULL)
+				download_path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
+
+			if (root_path == NULL)
+				root_path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
+
+		} else {
+			download_path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
+			root_path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
+		}
 
 		if (access(download_path, W_OK) != 0) {
 			if (mkdir(download_path, 0755) < 0) {
@@ -58,6 +81,9 @@ static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 
 		bluetooth_obex_server_set_root(root_path);
 		bluetooth_obex_server_set_destination_path(download_path);
+
+		g_free(download_path);
+		g_free(root_path);
 	}
 }
 
