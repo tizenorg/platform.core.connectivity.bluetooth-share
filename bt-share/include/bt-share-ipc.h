@@ -143,21 +143,16 @@ gboolean _bt_init_dbus_signal(void);
 void _free_transfer_info(opc_transfer_info_t *node);
 void _remove_transfer_info(opc_transfer_info_t *node);
 int _request_file_send(opc_transfer_info_t *node);
-void _bt_send_message_to_ui(int transfer_id,
-			    char *name,
-			    int percentage,
-			    gboolean completed,
-			    int error_type);
 void _bt_create_warning_popup(int error_type, char *msg);
-void _bt_update_transfer_list_view(const char *table);
 
 gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status);
 
 void _bt_rm_all_send_data(void);
 void _bt_rm_all_recv_data(void);
+void _bt_update_transfer_list_view(char *db);
 gboolean _bt_add_recv_transfer_status_data(char *device_name,
-					char *filepath, char *type,
-								unsigned int size, int status);
+			char *filepath, char *type,
+			unsigned int size, int status);
 
 #ifdef __cplusplus
 }

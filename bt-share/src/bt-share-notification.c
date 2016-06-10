@@ -42,20 +42,6 @@ typedef enum {
 	CSC_FTM,
 } bt_csc_type_t;
 
-notification_h _bt_create_notification(bt_qp_type_t type)
-{
-	DBG("+\n");
-	DBG("+Create type : %d\n", type);
-	notification_h noti = NULL;
-	noti = notification_create(type);
-	if (!noti) {
-		ERR("Fail to notification_new\n");
-		return NULL;
-	}
-	DBG("noti : %d \n", noti);
-	DBG("-\n");
-	return noti;
-}
 
 notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_type_e type, int index, int total)
 {
@@ -137,7 +123,7 @@ notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_ty
 
 		if (count_str) {
 			ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_EVENT_COUNT,
-					NULL, count_str, NOTIFICATION_VARIABLE_TYPE_NONE);
+							NULL, count_str, NOTIFICATION_VARIABLE_TYPE_NONE);
 			if (ret != NOTIFICATION_ERROR_NONE)
 				ERR("Fail to notification_set_text [%d]", ret);
 
@@ -147,8 +133,8 @@ notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_ty
 
 	if (title) {
 		ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE,
-				NULL, title,
-				NOTIFICATION_VARIABLE_TYPE_NONE);
+					NULL, title,
+					NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (ret != NOTIFICATION_ERROR_NONE) {
 			ERR("Fail to notification_set_text [%d]", ret);
 		}
@@ -158,18 +144,18 @@ notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_ty
 		if (type == BT_SENT_NOTI || type == BT_RECEIVED_NOTI) {
 			if (success == 1)
 				ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-						NULL, content,
-						NOTIFICATION_VARIABLE_TYPE_INT, fail,
-						NOTIFICATION_VARIABLE_TYPE_NONE);
+							NULL, content,
+							NOTIFICATION_VARIABLE_TYPE_INT, fail,
+							NOTIFICATION_VARIABLE_TYPE_NONE);
 			else
 				ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-						NULL, content,
-						NOTIFICATION_VARIABLE_TYPE_INT, success,
-						NOTIFICATION_VARIABLE_TYPE_INT, fail,
-						NOTIFICATION_VARIABLE_TYPE_NONE);
+							NULL, content,
+							NOTIFICATION_VARIABLE_TYPE_INT, success,
+							NOTIFICATION_VARIABLE_TYPE_INT, fail,
+							NOTIFICATION_VARIABLE_TYPE_NONE);
 		} else {
 			ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-					NULL, content, NOTIFICATION_VARIABLE_TYPE_NONE);
+						NULL, content, NOTIFICATION_VARIABLE_TYPE_NONE);
 		}
 
 		if (ret != NOTIFICATION_ERROR_NONE) {
@@ -230,18 +216,18 @@ notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_ty
 	else if (type == BT_RECEIVED_NOTI)
 		ad->receive_noti_id = noti_id;
 
-	INFO("Insert %s type: %d ", (type == BT_SENT_NOTI || type == BT_RECEIVED_NOTI) ?
+	INFO("Insert %s type: %p ", (type == BT_SENT_NOTI || type == BT_RECEIVED_NOTI) ?
 			"Notification" : "Ongoing", noti);
 
 	return noti;
 }
 
 int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
-		char *title, char *content, char *icon_path)
+				char *title, char *content, char *icon_path)
 {
-	retvm_if(!noti, BT_SHARE_FAIL, "noti is NULL");
+	retvm_if (!noti, BT_SHARE_FAIL, "noti is NULL");
 
-	INFO("Update noti : %d", noti);
+	INFO("Update noti : %p", noti);
 	notification_error_e ret = NOTIFICATION_ERROR_NONE;
 	int success = 0;
 	int fail = 0;
@@ -266,8 +252,8 @@ int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
 
 	if (title) {
 		ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE,
-				NULL, title,
-				NOTIFICATION_VARIABLE_TYPE_NONE);
+					NULL, title,
+					NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (ret != NOTIFICATION_ERROR_NONE) {
 			ERR("Fail to notification_set_text [%d]", ret);
 		}
@@ -277,18 +263,18 @@ int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
 		if (noti == ad->send_noti || noti == ad->receive_noti) {
 			if (success == 1)
 				ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-						NULL, content,
-						NOTIFICATION_VARIABLE_TYPE_INT, fail,
-						NOTIFICATION_VARIABLE_TYPE_NONE);
+							NULL, content,
+							NOTIFICATION_VARIABLE_TYPE_INT, fail,
+							NOTIFICATION_VARIABLE_TYPE_NONE);
 			else
 				ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-						NULL, content,
-						NOTIFICATION_VARIABLE_TYPE_INT, success,
-						NOTIFICATION_VARIABLE_TYPE_INT, fail,
-						NOTIFICATION_VARIABLE_TYPE_NONE);
+							NULL, content,
+							NOTIFICATION_VARIABLE_TYPE_INT, success,
+							NOTIFICATION_VARIABLE_TYPE_INT, fail,
+							NOTIFICATION_VARIABLE_TYPE_NONE);
 		} else {
 			ret = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT,
-					NULL, content, NOTIFICATION_VARIABLE_TYPE_NONE);
+						NULL, content, NOTIFICATION_VARIABLE_TYPE_NONE);
 		}
 
 		if (ret != NOTIFICATION_ERROR_NONE) {
@@ -312,7 +298,7 @@ int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
 }
 
 int _bt_update_notification_progress(notification_h not,
-		int id, int val)
+				int id, int val)
 {
 	notification_error_e ret = NOTIFICATION_ERROR_NONE;
 	ret = notification_update_progress(not, id, (double)val / 100);
@@ -320,36 +306,6 @@ int _bt_update_notification_progress(notification_h not,
 		ERR("Fail to notification_update_progress [%d]\n", ret);
 	}
 	return ret;
-}
-
-gboolean _bt_get_notification_text(int priv_id, char *str)
-{
-	notification_error_e ret = NOTIFICATION_ERROR_NONE;
-	notification_list_h list = NULL;
-	notification_h noti = NULL;
-
-	/* Get notification information from notification detail list */
-	ret = notification_get_detail_list(BT_SHARE_BIN_PATH,
-							     -1,
-							     priv_id,
-							     -1,
-							     &list);
-	if (ret != NOTIFICATION_ERROR_NONE) {
-		ERR("Fail to notification_get_text\n");
-		return FALSE;
-	}
-
-	if (list) {
-		noti = notification_list_get_data(list);
-		char *text = NULL;
-		notification_get_text(noti,
-				      NOTIFICATION_TEXT_TYPE_TITLE,
-				      &text);
-		g_strlcpy(str, text, NOTIFICATION_TEXT_LEN_MAX);
-	} else {
-		return FALSE;
-	}
-	return TRUE;
 }
 
 int _bt_get_notification_priv_id(notification_h noti)
@@ -367,28 +323,26 @@ int _bt_get_notification_priv_id(notification_h noti)
 
 int _bt_delete_notification(notification_h noti)
 {
-	DBG("+\n");
-
+	retv_if(!noti, BT_SHARE_FAIL);
 	notification_error_e ret = NOTIFICATION_ERROR_NONE;
 
-	if (!noti)
-		return BT_SHARE_FAIL;
+	INFO("Delete noti : %d", noti);
 
 	/* In case daemon, give full path */
 	ret = notification_delete(noti);
 	if (ret != NOTIFICATION_ERROR_NONE) {
-		ERR("Fail to notification_delete_by_priv_id\n");
+		ERR("Fail to notification_delete [%d]", ret);
 	}
-	DBG("-\n");
+
 	return ret;
 }
 
 int _bt_set_notification_app_launch(notification_h noti,
-		bt_notification_launch_type_e launch_type,
-		const char *transfer_type,
-		const char *filename,
-		const char *progress_cnt,
-		int transfer_id)
+					bt_notification_launch_type_e launch_type,
+					const char *transfer_type,
+					const char *filename,
+					const char *progress_cnt,
+					int transfer_id)
 {
 	DBG("+\n");
 	if (!noti)
@@ -444,37 +398,13 @@ int _bt_set_notification_app_launch(notification_h noti,
 	}
 
 	ret = notification_set_execute_option(noti,
-			NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH,
-			NULL, NULL, b);
+					NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH,
+					NULL, NULL, b);
 	if (ret != NOTIFICATION_ERROR_NONE) {
 		ERR("Fail to notification_set_execute_option [%d]\n", ret);
 	}
 
 	bundle_free(b);
-	DBG("-\n");
-	return ret;
-}
-
-int _bt_set_notification_property(notification_h noti, int flag)
-{
-	DBG("+\n");
-	if (!noti)
-		return -1;
-
-	notification_error_e ret = NOTIFICATION_ERROR_NONE;
-
-	ret = notification_set_property(noti, flag);
-	if (ret != NOTIFICATION_ERROR_NONE) {
-		ERR("Fail to notification_set_property\n");
-	}
-
-	ret = notification_set_display_applist(noti,
-				 NOTIFICATION_DISPLAY_APP_ALL ^
-				 NOTIFICATION_DISPLAY_APP_TICKER);
-	if (ret != NOTIFICATION_ERROR_NONE) {
-		ERR("Fail to notification_set_display_applist\n");
-	}
-
 	DBG("-\n");
 	return ret;
 }
@@ -493,7 +423,7 @@ gboolean _bt_update_notification_status(struct bt_appdata *ad)
 	int priv_id = 0;
 	int ret;
 
-	retv_if(ad == NULL, FALSE);
+	retv_if (ad == NULL, FALSE);
 
 	/* When bt-share is launched, need to update notification status  */
 
@@ -564,7 +494,7 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 {
 	DBG("__bt_notification_changed_cb");
 
-	retm_if(data == NULL, "Invalid data");
+	retm_if (data == NULL, "Invalid data");
 	struct bt_appdata *ad = (struct bt_appdata *)data;
 	gboolean is_sent_noti_exist = FALSE;
 	gboolean is_received_noti_exist = FALSE;
@@ -575,18 +505,18 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 	int priv_id;
 	sqlite3 *db = NULL;
 
-	retm_if(op_list == NULL, "Invalid op_list");
+	retm_if (op_list == NULL, "Invalid op_list");
 
 	if (type != NOTIFICATION_TYPE_NOTI ||
-			(op_list->type != NOTIFICATION_OP_DELETE &&
-			 op_list->type != NOTIFICATION_OP_DELETE_ALL))
+		(op_list->type != NOTIFICATION_OP_DELETE &&
+		op_list->type != NOTIFICATION_OP_DELETE_ALL))
 		return;
 
 	if (ad->send_noti == NULL && ad->receive_noti == NULL)
 		return;
 
 	noti_err = notification_get_list(type, -1, &noti_list);
-	ret_if(noti_err != NOTIFICATION_ERROR_NONE);
+	ret_if (noti_err != NOTIFICATION_ERROR_NONE);
 
 	noti_list = notification_list_get_head(noti_list);
 	while (noti_list) {
@@ -610,7 +540,7 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 		ad->send_noti = NULL;
 		ad->send_noti_id = 0;
 		if (bt_share_remove_tr_data_by_notification(db,
-					BT_DB_OUTBOUND) == BT_SHARE_ERR_NONE) {
+			BT_DB_OUTBOUND) == BT_SHARE_ERR_NONE) {
 			ad->send_data.tr_fail = 0;
 			ad->send_data.tr_success = 0;
 		}
@@ -620,7 +550,7 @@ static void __bt_notification_changed_cb(void *data, notification_type_e type, n
 		ad->receive_noti = NULL;
 		ad->receive_noti_id = 0;
 		if (bt_share_remove_tr_data_by_notification(db,
-					BT_DB_INBOUND) == BT_SHARE_ERR_NONE) {
+			BT_DB_INBOUND) == BT_SHARE_ERR_NONE) {
 			ad->recv_data.tr_fail = 0;
 			ad->recv_data.tr_success = 0;
 		}

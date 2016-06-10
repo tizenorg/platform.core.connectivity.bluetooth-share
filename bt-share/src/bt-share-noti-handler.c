@@ -75,7 +75,7 @@ static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 
 		if (access(download_path, W_OK) != 0) {
 			if (mkdir(download_path, 0755) < 0) {
-				DBG("mkdir fail![%s]", download_path);
+				ERR("mkdir fail![%s]", download_path);
 			}
 		}
 
@@ -103,10 +103,10 @@ static void __bt_mmc_status_changed_cb(keynode_t *node, void *data)
 		mmc_status = vconf_keynode_get_int(node);
 
 		if (mmc_status == VCONFKEY_SYSMAN_MMC_REMOVED ||
-				mmc_status == VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED) {
+			mmc_status == VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED) {
 			retm_if(vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
-						&default_memory) != 0,
-					"vconf_get_int failed");
+							&default_memory) != 0,
+							"vconf_get_int failed");
 
 			if (ad->opc_noti) {	/* sending case */
 				DBG("cancel outbound transfer");
@@ -121,9 +121,9 @@ static void __bt_mmc_status_changed_cb(keynode_t *node, void *data)
 				if (default_memory == BT_DEFAULT_MEM_MMC) {
 					_bt_obex_cancel_transfer(data);
 					retm_if(vconf_set_int(
-								VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
-								BT_DEFAULT_MEM_PHONE) != 0, "vconf_set_int failed");
-					DBG("Default Memory set to Phone");
+						VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
+						BT_DEFAULT_MEM_PHONE) != 0, "vconf_set_int failed");
+						DBG("Default Memory set to Phone");
 				}
 			}
 		}
@@ -133,18 +133,20 @@ static void __bt_mmc_status_changed_cb(keynode_t *node, void *data)
 
 void _bt_init_vconf_notification(void *data)
 {
+	retm_if(!data, "invalid param!");
+
 	int ret;
 
 	ret = vconf_notify_key_changed(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
 			__bt_default_memory_changed_cb, NULL);
 	if (ret < 0) {
-		DBG("vconf_notify_key_changed init failed");
+		ERR("vconf_notify_key_changed init failed");
 	}
 
 	ret = vconf_notify_key_changed(VCONFKEY_SYSMAN_MMC_STATUS,
 			__bt_mmc_status_changed_cb, data);
 	if (ret < 0) {
-		DBG("vconf_notify_key_changed init failed");
+		ERR("vconf_notify_key_changed init failed");
 	}
 }
 
@@ -154,13 +156,13 @@ void _bt_deinit_vconf_notification(void)
 	ret = vconf_ignore_key_changed(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
 			(vconf_callback_fn) __bt_default_memory_changed_cb);
 	if (ret < 0) {
-		DBG("vconf_notify_key_changed deinit failed");
+		ERR("vconf_notify_key_changed deinit failed");
 	}
 
 	ret = vconf_ignore_key_changed(VCONFKEY_SYSMAN_MMC_STATUS,
 			(vconf_callback_fn) __bt_mmc_status_changed_cb);
 	if (ret < 0) {
-		DBG("vconf_notify_key_changed deinit failed");
+		ERR("vconf_notify_key_changed deinit failed");
 	}
 }
 

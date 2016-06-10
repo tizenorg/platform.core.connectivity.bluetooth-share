@@ -40,6 +40,8 @@ typedef enum {
 	BT_FILE_OTHER	/**<OTHER*/
 } bt_file_type_t;
 
+bt_obex_server_authorize_into_t server_auth_info;
+
 int _bt_get_transfer_id_by_noti_id(int noti_id);
 
 void _bt_clear_receive_noti_list(void);
