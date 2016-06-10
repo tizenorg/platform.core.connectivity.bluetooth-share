@@ -53,9 +53,6 @@
 #include "bt-share-common.h"
 #include "bt-share-noti-handler.h"
 
-
-extern struct bt_appdata *app_state;
-
 typedef struct {
 	void *noti_handle;
 	int transfer_id;
@@ -67,9 +64,10 @@ typedef struct {
 	bt_file_type_t file_type;
 } bt_file_info_t;
 
-bt_obex_server_authorize_into_t server_auth_info;
+extern struct bt_appdata *app_state;
 extern GSList *bt_transfer_list;
 GSList *bt_receive_noti_list;
+
 
 static gboolean isFirstReceivedPacket = FALSE;
 
@@ -200,12 +198,12 @@ char * __get_dest_file_path(const char *path)
 	 */
 	if (g_str_has_prefix(path, BT_FTP_FOLDER_PHONE)) {
 		snprintf(file_path, sizeof(file_path), "%s/%s",
-				BT_DOWNLOAD_PHONE_ROOT,
-				path + strlen(BT_FTP_FOLDER_PHONE));
+			BT_DOWNLOAD_PHONE_ROOT,
+			path + strlen(BT_FTP_FOLDER_PHONE));
 	} else if (g_str_has_prefix(path, BT_FTP_FOLDER_MMC)) {
 		snprintf(file_path, sizeof(file_path), "%s/%s",
-				BT_DOWNLOAD_MMC_ROOT,
-				path + strlen(BT_FTP_FOLDER_MMC));
+			BT_DOWNLOAD_MMC_ROOT,
+			path + strlen(BT_FTP_FOLDER_MMC));
 	} else {
 		snprintf(file_path, sizeof(file_path), "%s", path);
 	}
@@ -222,7 +220,7 @@ static void __free_file_info(bt_file_info_t *info)
 }
 
 void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
-		void *user_data)
+			       void *user_data)
 {
 	int ret;
 	static int send_index = 0;
@@ -244,215 +242,38 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 		node = bt_transfer_list->data;
 
 	switch (event) {
-		case BLUETOOTH_EVENT_ENABLED:
-			if (ad->obex_server_init == FALSE) {
-				if (_bt_init_obex_server() == BT_SHARE_ERROR_NONE)
-					ad->obex_server_init = TRUE;
-			}
-			break;
+	case BLUETOOTH_EVENT_ENABLED:
+		if (ad->obex_server_init == FALSE) {
+			if (_bt_init_obex_server() == BT_SHARE_ERROR_NONE)
+				ad->obex_server_init = TRUE;
+		}
+		break;
 
-		case BLUETOOTH_EVENT_OPC_CONNECTED:
-			INFO("BLUETOOTH_EVENT_OPC_CONNECTED, result [%d] \n", param->result);
-			send_index = 0;
-			if (param->result != BLUETOOTH_ERROR_NONE) {
-				_bt_create_warning_popup(param->result,
-						BT_STR_UNABLE_TO_SEND);
-				if (NULL != node && node->file_cnt > send_index) {
-					if (ad->tr_next_data == NULL) {
-						ERR("ad->tr_next_data is NULL");
-						return;
-					}
-					info = (bt_tr_data_t *)(ad->tr_next_data)->data;
-					if (info == NULL) {
-						ERR("info is NULL");
-						return;
-					}
-
-					s_id = info->sid;
-					INFO("info->sid = %d info->id = %d", info->sid, info->id);
-					while (NULL != ad->tr_next_data) {
-						info = (bt_tr_data_t *)(ad->tr_next_data)->data;
-						if (info == NULL)
-							break;
-						INFO("info->sid = %d info->id = %d", info->sid, info->id);
-						if (info->sid != s_id) {
-							DBG("SID did not match so break done.");
-							break;
-						}
-
-						_bt_update_sent_data_status(info->id, BT_TR_FAIL);
-						ad->send_data.tr_fail++;
-						ad->tr_next_data = g_slist_next(ad->tr_next_data);
-					}
-					_bt_update_transfer_list_view("outbound");
-
-					if (ad->send_noti == NULL) {
-						ad->send_noti = _bt_insert_notification(ad, BT_SENT_NOTI, 0, 0);
-					} else {
-						_bt_update_notification(ad, ad->send_noti, NULL, NULL, NULL);
-					}
+	case BLUETOOTH_EVENT_OPC_CONNECTED:
+		INFO("BLUETOOTH_EVENT_OPC_CONNECTED, result [%d] \n", param->result);
+		send_index = 0;
+		if (param->result != BLUETOOTH_ERROR_NONE) {
+			_bt_create_warning_popup(param->result,
+				BT_STR_UNABLE_TO_SEND);
+			if (NULL != node && node->file_cnt > send_index) {
+				if (ad->tr_next_data == NULL) {
+					ERR("ad->tr_next_data is NULL");
+					return;
 				}
-
-				_remove_transfer_info(node);
-
-				if (!ad->tr_next_data) {
-					bt_share_release_tr_data_list(ad->tr_send_list);
-					ad->tr_send_list = NULL;
-				}
-
-			} else {
-				ret = notification_status_message_post(BT_STR_SENDING);
-				if (ret != NOTIFICATION_ERROR_NONE)
-					ERR("notification_status_message_post() is failed : %d", ret);
-
-				_bt_share_block_sleep(TRUE);
-				_bt_set_transfer_indicator(TRUE);
-			}
-			break;
-
-
-		case BLUETOOTH_EVENT_OPC_TRANSFER_STARTED: 
-			INFO("BLUETOOTH_EVENT_OPC_TRANSFER_STARTED");
-			ret_if(node == NULL);
-
-			if (ad->opc_noti) {
-				_bt_delete_notification(ad->opc_noti);
-				ad->opc_noti = NULL;
-				ad->opc_noti_id = 0;
-			}
-
-			name = __get_file_name(send_index++, node->file_path);
-			snprintf(opc_cnt, sizeof(opc_cnt), "%d/%d",
-					send_index, node->file_cnt);
-
-			noti = _bt_insert_notification(ad, BT_SENDING_NOTI, send_index, node->file_cnt);
-			ad->opc_noti_id = _bt_get_notification_priv_id(noti);
-			_bt_set_notification_app_launch(noti, CREATE_PROGRESS,
-					NOTI_TR_TYPE_OUT, name, opc_cnt, 0);
-
-			ad->opc_noti = noti;
-
-			INFO("file count %d", node->file_cnt);
-			_bt_update_notification(ad, ad->opc_noti, name, NULL, NULL);
-			_bt_update_transfer_list_view("outbound");
-
-			if (ad->tr_next_data == NULL) {
-				ERR("ad->tr_next_data is NULL");
-				return;
-			}
-
-			info = (bt_tr_data_t *)(ad->tr_next_data)->data;
-			ret_if(info == NULL);
-			ad->current_tr_uid = info->id;
-			INFO("ad->current_tr_uid = [%d]", ad->current_tr_uid);
-			break;
-
-
-		case BLUETOOTH_EVENT_OPC_TRANSFER_PROGRESS: 
-			client_info = (bt_opc_transfer_info_t *)param->param_data;
-			ret_if(client_info == NULL);
-
-			name =  strrchr(client_info->filename, '/');
-			if (name)
-				name++;
-			else
-				name = client_info->filename;
-
-			percentage = client_info->percentage;
-
-			_bt_update_notification_progress(NULL,
-					ad->opc_noti_id, percentage);
-			break;
-
-
-		case BLUETOOTH_EVENT_OPC_TRANSFER_COMPLETE: 
-			INFO("BLUETOOTH_EVENT_OPC_TRANSFER_COMPLETE");
-
-			client_info = (bt_opc_transfer_info_t *)param->param_data;
-			ret_if(client_info == NULL);
-
-			DBG("client_info->filename = [%s]", client_info->filename);
-			INFO("ad->current_tr_uid = [%d]", ad->current_tr_uid);
-
-			name =  strrchr(client_info->filename, '/');
-			if (name)
-				name++;
-			else
-				name = client_info->filename;
-
-			DBG("name address = [%x]", name);
-
-
-
-			if (ad->opc_noti) {
-				_bt_delete_notification(ad->opc_noti);
-				ad->opc_noti = NULL;
-				ad->opc_noti_id = 0;
-			}
-			INFO("ad->send_data.tr_fail = %d, ad->send_data.tr_success= %d",
-					ad->send_data.tr_fail, ad->send_data.tr_success);
-
-			if (param->result != BLUETOOTH_ERROR_NONE)
-				ad->send_data.tr_fail++;
-			else {
-				ad->send_data.tr_success++;
-				_bt_remove_tmp_file(client_info->filename);
-				_bt_remove_vcf_file(client_info->filename);
-			}
-
-			if (ad->send_noti == NULL) {
-				ad->send_noti = _bt_insert_notification(ad, BT_SENT_NOTI, 0, 0);
-			} else {
-				_bt_update_notification(ad, ad->send_noti, NULL, NULL, NULL);
-			}
-
-			if (param->result != BLUETOOTH_ERROR_NONE) {
-				_bt_update_sent_data_status(ad->current_tr_uid,
-						BT_TR_FAIL);
-				DBG("opp_transfer_abort by user %d ", ad->opp_transfer_abort);
-				if (!ad->opp_transfer_abort)
-					_bt_create_warning_popup(param->result,
-							BT_STR_UNABLE_TO_SEND);
-				ad->opp_transfer_abort = FALSE;
-			} else {
-				_bt_update_sent_data_status(ad->current_tr_uid,
-						BT_TR_SUCCESS);
-			}
-
-			_bt_update_transfer_list_view("outbound");
-
-			ad->tr_next_data = g_slist_next(ad->tr_next_data);
-			break;
-
-
-		case BLUETOOTH_EVENT_OPC_DISCONNECTED: 
-			INFO("BLUETOOTH_EVENT_OPC_DISCONNECTED");
-			ret_if(node == NULL);
-
-			if (node->file_cnt > send_index) {
-				send_index = 0;
-				if (!ad) {
-					ERR("ad is NULL");
-					break;
-				}
-				if (!ad->tr_next_data) {
-					ERR("ad>tr_next_data is NULL");
-					break;
-				}
-
 				info = (bt_tr_data_t *)(ad->tr_next_data)->data;
-				if (info == NULL)
-					break;
+				if (info == NULL) {
+					ERR("info is NULL");
+					return;
+				}
+
 				s_id = info->sid;
 				INFO("info->sid = %d info->id = %d", info->sid, info->id);
-
 				while (NULL != ad->tr_next_data) {
 					info = (bt_tr_data_t *)(ad->tr_next_data)->data;
 					if (info == NULL)
 						break;
 					INFO("info->sid = %d info->id = %d", info->sid, info->id);
-
-					if (s_id != info->sid) {
+					if (info->sid != s_id) {
 						DBG("SID did not match so break done.");
 						break;
 					}
@@ -470,226 +291,399 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 				}
 			}
 
-
-			send_index = 0;
-			_bt_share_block_sleep(FALSE);
-			_bt_set_transfer_indicator(FALSE);
 			_remove_transfer_info(node);
+
 			if (!ad->tr_next_data) {
 				bt_share_release_tr_data_list(ad->tr_send_list);
 				ad->tr_send_list = NULL;
 			}
-			break;
 
+		} else {
+			ret = notification_status_message_post(BT_STR_SENDING);
+			if (ret != NOTIFICATION_ERROR_NONE)
+				ERR("notification_status_message_post() is failed : %d", ret);
 
-		case BLUETOOTH_EVENT_OBEX_SERVER_CONNECTION_AUTHORIZE:
-			INFO("BLUETOOTH_EVENT_OBEX_SERVER_CONNECTION_AUTHORIZE");
-			break;
-		case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_AUTHORIZE:
-			INFO("BT_EVENT_OBEX_TRANSFER_AUTHORIZE");
-			if (param->result == BLUETOOTH_ERROR_NONE) {
-				g_free(server_auth_info.filename);
-				server_auth_info.filename = NULL;
-
-				auth_info = param->param_data;
-				server_auth_info.filename = g_strdup(auth_info->filename);
-				server_auth_info.length = auth_info->length;
-				if (server_auth_info.filename)
-					__bt_obex_file_push_auth(&server_auth_info);
-			}
-			break;
-
-		case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_CONNECTED:
-			INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_CONNECTED");
-			if (param->result == BLUETOOTH_ERROR_NONE) {
-
-				isTransferConnectedReceived = TRUE;
-			}
-			break;
-		case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_STARTED:
-			INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_STARTED");
-			isFirstReceivedPacket = TRUE;
-			transfer_info = param->param_data;
-			if (transfer_info->file_size > (100 * 1024)) {
-				if (0 == g_strcmp0(transfer_info->type, TRANSFER_GET)) {
-					/*GET request */
-					noti = _bt_insert_notification(ad, BT_SENDING_NOTI, 0, 0);
-
-					_bt_set_notification_app_launch(noti, CREATE_PROGRESS,
-							NOTI_TR_TYPE_OUT, transfer_info->filename, NULL,
-							transfer_info->transfer_id);
-				} else {
-					/*PUT Request */
-					noti = _bt_insert_notification(ad, BT_RECEIVING_NOTI, 0, 0);
-					_bt_set_notification_app_launch(noti, CREATE_PROGRESS,
-							NOTI_TR_TYPE_IN, transfer_info->filename, NULL,
-							transfer_info->transfer_id);
-				}
-
-				data = g_new0(bt_noti_data_t, 1);
-				data->noti_handle = noti;
-				data->noti_id = _bt_get_notification_priv_id(noti);
-
-				data->transfer_id = transfer_info->transfer_id;
-
-				bt_receive_noti_list = g_slist_append(bt_receive_noti_list, data);
-			}
-			_bt_set_transfer_indicator(TRUE);
 			_bt_share_block_sleep(TRUE);
-			break;
+			_bt_set_transfer_indicator(TRUE);
+		}
+		break;
 
-		case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_PROGRESS:
-			if (param->result == BLUETOOTH_ERROR_NONE) {
-				transfer_info = param->param_data;
+	case BLUETOOTH_EVENT_OPC_TRANSFER_STARTED:
+		INFO("BLUETOOTH_EVENT_OPC_TRANSFER_STARTED");
+		ret_if(node == NULL);
 
-				data = __bt_get_noti_data_by_transfer_id(
+		if (ad->opc_noti) {
+			_bt_delete_notification(ad->opc_noti);
+			ad->opc_noti = NULL;
+			ad->opc_noti_id = 0;
+		}
+
+		name = __get_file_name(send_index++, node->file_path);
+		snprintf(opc_cnt, sizeof(opc_cnt), "%d/%d",
+				send_index, node->file_cnt);
+
+		noti = _bt_insert_notification(ad, BT_SENDING_NOTI, send_index, node->file_cnt);
+		ad->opc_noti_id = _bt_get_notification_priv_id(noti);
+		_bt_set_notification_app_launch(noti, CREATE_PROGRESS,
+					NOTI_TR_TYPE_OUT, name, opc_cnt, 0);
+
+		ad->opc_noti = noti;
+
+		INFO("file count %d", node->file_cnt);
+		_bt_update_notification(ad, ad->opc_noti, name, NULL, NULL);
+		_bt_update_transfer_list_view("outbound");
+
+		if (ad->tr_next_data == NULL) {
+			ERR("ad->tr_next_data is NULL");
+			return;
+		}
+
+		info = (bt_tr_data_t *)(ad->tr_next_data)->data;
+		ret_if(info == NULL);
+		ad->current_tr_uid = info->id;
+		INFO("ad->current_tr_uid = [%d]", ad->current_tr_uid);
+		break;
+
+	case BLUETOOTH_EVENT_OPC_TRANSFER_PROGRESS:
+		client_info = (bt_opc_transfer_info_t *)param->param_data;
+		ret_if(client_info == NULL);
+
+		name =  strrchr(client_info->filename, '/');
+		if (name)
+			name++;
+		else
+			name = client_info->filename;
+
+		percentage = client_info->percentage;
+
+		_bt_update_notification_progress(NULL,
+				ad->opc_noti_id, percentage);
+		break;
+
+
+	case BLUETOOTH_EVENT_OPC_TRANSFER_COMPLETE:
+		INFO("BLUETOOTH_EVENT_OPC_TRANSFER_COMPLETE");
+
+		client_info = (bt_opc_transfer_info_t *)param->param_data;
+		ret_if(client_info == NULL);
+
+		DBG("client_info->filename = [%s]", client_info->filename);
+		INFO("ad->current_tr_uid = [%d]", ad->current_tr_uid);
+
+		name =  strrchr(client_info->filename, '/');
+		if (name)
+			name++;
+		else
+			name = client_info->filename;
+
+		DBG("name address = [%x]", name);
+
+
+
+		if (ad->opc_noti) {
+			_bt_delete_notification(ad->opc_noti);
+			ad->opc_noti = NULL;
+			ad->opc_noti_id = 0;
+		}
+		INFO("ad->send_data.tr_fail = %d, ad->send_data.tr_success= %d",
+			ad->send_data.tr_fail, ad->send_data.tr_success);
+
+		if (param->result != BLUETOOTH_ERROR_NONE)
+			ad->send_data.tr_fail++;
+		else {
+			ad->send_data.tr_success++;
+			_bt_remove_tmp_file(client_info->filename);
+			_bt_remove_vcf_file(client_info->filename);
+		}
+
+		if (ad->send_noti == NULL) {
+			ad->send_noti = _bt_insert_notification(ad, BT_SENT_NOTI, 0, 0);
+		} else {
+			_bt_update_notification(ad, ad->send_noti, NULL, NULL, NULL);
+		}
+
+		if (param->result != BLUETOOTH_ERROR_NONE) {
+			_bt_update_sent_data_status(ad->current_tr_uid,
+							BT_TR_FAIL);
+			DBG("opp_transfer_abort by user %d ", ad->opp_transfer_abort);
+			if (!ad->opp_transfer_abort)
+				_bt_create_warning_popup(param->result,
+					BT_STR_UNABLE_TO_SEND);
+			ad->opp_transfer_abort = FALSE;
+		} else {
+			_bt_update_sent_data_status(ad->current_tr_uid,
+							BT_TR_SUCCESS);
+		}
+
+		_bt_update_transfer_list_view("outbound");
+
+		ad->tr_next_data = g_slist_next(ad->tr_next_data);
+		break;
+
+
+	case BLUETOOTH_EVENT_OPC_DISCONNECTED: 
+		INFO("BLUETOOTH_EVENT_OPC_DISCONNECTED");
+		ret_if(node == NULL);
+
+		if (node->file_cnt > send_index) {
+			send_index = 0;
+			if (!ad) {
+				ERR("ad is NULL");
+				break;
+			}
+			if (!ad->tr_next_data) {
+				ERR("ad>tr_next_data is NULL");
+				break;
+			}
+
+			info = (bt_tr_data_t *)(ad->tr_next_data)->data;
+			if (info == NULL)
+				break;
+			s_id = info->sid;
+			INFO("info->sid = %d info->id = %d", info->sid, info->id);
+
+			while (NULL != ad->tr_next_data) {
+				info = (bt_tr_data_t *)(ad->tr_next_data)->data;
+				if (info == NULL)
+					break;
+				INFO("info->sid = %d info->id = %d", info->sid, info->id);
+
+				if (s_id != info->sid) {
+					DBG("SID did not match so break done.");
+					break;
+				}
+
+				_bt_update_sent_data_status(info->id, BT_TR_FAIL);
+				ad->send_data.tr_fail++;
+				ad->tr_next_data = g_slist_next(ad->tr_next_data);
+			}
+			_bt_update_transfer_list_view("outbound");
+
+			if (ad->send_noti == NULL) {
+				ad->send_noti = _bt_insert_notification(ad, BT_SENT_NOTI, 0, 0);
+			} else {
+				_bt_update_notification(ad, ad->send_noti, NULL, NULL, NULL);
+			}
+		}
+
+
+		send_index = 0;
+		_bt_share_block_sleep(FALSE);
+		_bt_set_transfer_indicator(FALSE);
+		_remove_transfer_info(node);
+		if (!ad->tr_next_data) {
+			bt_share_release_tr_data_list(ad->tr_send_list);
+			ad->tr_send_list = NULL;
+		}
+		break;
+
+	case BLUETOOTH_EVENT_OBEX_SERVER_CONNECTION_AUTHORIZE:
+		INFO("BLUETOOTH_EVENT_OBEX_SERVER_CONNECTION_AUTHORIZE");
+		break;
+	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_AUTHORIZE:
+		INFO("BT_EVENT_OBEX_TRANSFER_AUTHORIZE");
+		if (param->result == BLUETOOTH_ERROR_NONE) {
+			g_free(server_auth_info.filename);
+			server_auth_info.filename = NULL;
+
+			auth_info = param->param_data;
+			server_auth_info.filename = g_strdup(auth_info->filename);
+			server_auth_info.length = auth_info->length;
+			if (server_auth_info.filename)
+				__bt_obex_file_push_auth(&server_auth_info);
+		}
+		break;
+
+	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_CONNECTED:
+		INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_CONNECTED");
+		if (param->result == BLUETOOTH_ERROR_NONE) {
+
+			isTransferConnectedReceived = TRUE;
+		}
+		break;
+	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_STARTED:
+		INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_STARTED");
+		isFirstReceivedPacket = TRUE;
+		transfer_info = param->param_data;
+		if (transfer_info->file_size > (100 * 1024)) {
+			if (0 == g_strcmp0(transfer_info->type, TRANSFER_GET)) {
+				/*GET request */
+				noti = _bt_insert_notification(ad, BT_SENDING_NOTI, 0, 0);
+
+				_bt_set_notification_app_launch(noti, CREATE_PROGRESS,
+						NOTI_TR_TYPE_OUT, transfer_info->filename, NULL,
 						transfer_info->transfer_id);
-				if (data == NULL) {
-					DBG("Data is NULL, returning");
-					return;
-				}
-
-				if (isFirstReceivedPacket)
-					_bt_update_notification(ad, data->noti_handle, transfer_info->filename, "", NULL);
-				if (data && data->noti_id)
-					_bt_update_notification_progress(
-							data->noti_handle,
-							data->noti_id,
-							transfer_info->percentage);
-				else
-					DBG("noti_id is not exist!");
+			} else {
+				/*PUT Request */
+				noti = _bt_insert_notification(ad, BT_RECEIVING_NOTI, 0, 0);
+				_bt_set_notification_app_launch(noti, CREATE_PROGRESS,
+						NOTI_TR_TYPE_IN, transfer_info->filename, NULL,
+						transfer_info->transfer_id);
 			}
-			isFirstReceivedPacket = FALSE;
-			break;
 
-		case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_COMPLETED:
-			INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_COMPLETED");
-			char mime_type[BT_MIME_TYPE_MAX_LEN] = { 0 };
-			unsigned int file_size = 0;
-			struct stat file_attr;
-			char *file_path = NULL;
+			data = g_new0(bt_noti_data_t, 1);
+			data->noti_handle = noti;
+			data->noti_id = _bt_get_notification_priv_id(noti);
+
+			data->transfer_id = transfer_info->transfer_id;
+
+			bt_receive_noti_list = g_slist_append(bt_receive_noti_list, data);
+		}
+		_bt_set_transfer_indicator(TRUE);
+		_bt_share_block_sleep(TRUE);
+		break;
+
+	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_PROGRESS:
+		if (param->result == BLUETOOTH_ERROR_NONE) {
 			transfer_info = param->param_data;
-			_bt_set_transfer_indicator(FALSE);
-			_bt_share_block_sleep(FALSE);
-			isFirstReceivedPacket = FALSE;
 
-			data = __bt_get_noti_data_by_transfer_id(transfer_info->transfer_id);
-
-			if (data) {
-				_bt_delete_notification(data->noti_handle);
-				bt_receive_noti_list = g_slist_remove(bt_receive_noti_list, data);
-				g_free(data);
+			data = __bt_get_noti_data_by_transfer_id(
+						transfer_info->transfer_id);
+			if (data == NULL) {
+				DBG("Data is NULL, returning");
+				return;
 			}
 
-			if (0 == g_strcmp0(transfer_info->type, TRANSFER_PUT)) {
-				INFO("TRANSFER_PUT");
+			if (isFirstReceivedPacket)
+				_bt_update_notification(ad, data->noti_handle, transfer_info->filename, "", NULL);
+			if (data && data->noti_id)
+				_bt_update_notification_progress(
+						data->noti_handle,
+						data->noti_id,
+						transfer_info->percentage);
+			else
+				DBG("noti_id is not exist!");
+		}
+		isFirstReceivedPacket = FALSE;
+		break;
 
-				file_path = __get_dest_file_path(transfer_info->file_path);
-				DBG("Filename : %s", transfer_info->filename);
-				DBG("File Path : %s", transfer_info->file_path);
+	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_COMPLETED:
+		INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_COMPLETED");
+		char mime_type[BT_MIME_TYPE_MAX_LEN] = { 0 };
+		unsigned int file_size = 0;
+		struct stat file_attr;
+		char *file_path = NULL;
+		transfer_info = param->param_data;
+		_bt_set_transfer_indicator(FALSE);
+		_bt_share_block_sleep(FALSE);
+		isFirstReceivedPacket = FALSE;
 
-				if (aul_get_mime_from_file(file_path, mime_type,
-							BT_MIME_TYPE_MAX_LEN) == AUL_R_OK)
-					DBG("mime type : %s", mime_type);
+		data = __bt_get_noti_data_by_transfer_id(transfer_info->transfer_id);
 
-				if (g_utf8_validate(file_path, -1, NULL)) {
-					if (stat(file_path, &file_attr) == 0)
-						file_size = file_attr.st_size;
-					else
-						file_size = 0;
-				}
+		if (data) {
+			_bt_delete_notification(data->noti_handle);
+			bt_receive_noti_list = g_slist_remove(bt_receive_noti_list, data);
+			g_free(data);
+		}
 
-				if (param->result != BLUETOOTH_ERROR_NONE) {
-					ad->recv_data.tr_fail++;
-					_bt_add_recv_transfer_status_data(
+		if (0 == g_strcmp0(transfer_info->type, TRANSFER_PUT)) {
+			INFO("TRANSFER_PUT");
+
+			file_path = __get_dest_file_path(transfer_info->file_path);
+			DBG("Filename : %s", transfer_info->filename);
+			DBG("File Path : %s", transfer_info->file_path);
+
+			if (aul_get_mime_from_file(file_path, mime_type,
+					BT_MIME_TYPE_MAX_LEN) == AUL_R_OK)
+				DBG("mime type : %s", mime_type);
+			if (g_utf8_validate(file_path, -1, NULL)) {
+				if (stat(file_path, &file_attr) == 0)
+					file_size = file_attr.st_size;
+				else
+					file_size = 0;
+			}
+
+			if (param->result != BLUETOOTH_ERROR_NONE) {
+				ad->recv_data.tr_fail++;
+				_bt_add_recv_transfer_status_data(
 							transfer_info->device_name,
 							transfer_info->filename,
 							mime_type, file_size,
 							BT_TR_FAIL);
-				} else {
-					ad->recv_data.tr_success++;
-					_bt_add_recv_transfer_status_data(
+			} else {
+				ad->recv_data.tr_success++;
+				_bt_add_recv_transfer_status_data(
 							transfer_info->device_name,
 							file_path,
 							mime_type, file_size,
 							BT_TR_SUCCESS);
-				}
-
-				_bt_update_transfer_list_view("inbound");
-
-				if (ad->receive_noti == NULL) {
-					ad->receive_noti = _bt_insert_notification(ad, BT_RECEIVED_NOTI, 0, 0);
-				} else {
-					_bt_update_notification(ad, ad->receive_noti, NULL, NULL, NULL);
-				}
-			} else if (0 == g_strcmp0(transfer_info->type, TRANSFER_GET)) {
-				INFO("TRANSFER_GET");
 			}
 
-			if (param->result == BLUETOOTH_ERROR_NONE) {
-				bt_file_type_t file_type;
-				char *extn;
-				bt_file_info_t *info;
+			_bt_update_transfer_list_view("inbound");
 
-				transfer_info = param->param_data;
-				if (transfer_info->file_path == NULL) {
-					ERR("File path is NULL");
-					break;
-				}
-
-				if (!g_strcmp0(transfer_info->type, TRANSFER_GET)) {
-					DBG("Transfer is GET, so no need to handle");
-					break;
-				}
-
-				name = __get_dest_file_path(transfer_info->file_path);
-
-				extn = strrchr(name, '.');
-				if (NULL != extn)
-					extn++;
-				file_type = __get_file_type(extn);
-
-				INFO("file type %d", file_type);
-
-				if (transfer_info->server_type == FTP_SERVER ||
-						file_type != BT_FILE_VCARD) {
-					if (file_type != BT_FILE_VCAL)
-						__bt_scan_media_file(name);
-					g_free(name);
-					break;
-				}
-
-				info = g_new0(bt_file_info_t, 1);
-				info->file_path = name;
-				info->file_type = file_type;
-
-				if (pthread_create(&thread_id, NULL, (void *)&_bt_obex_writeclose,
-							info) < 0) {
-					ERR("pthread_create() is failed");
-					__free_file_info(info);
-					break;
-				}
-				if (pthread_detach(thread_id) < 0) {
-					ERR("pthread_detach() is failed");
-				}
+			if (ad->receive_noti == NULL) {
+				ad->receive_noti = _bt_insert_notification(ad, BT_RECEIVED_NOTI, 0, 0);
 			} else {
-				DBG("param->result = %d", param->result);
-				DBG("opp_transfer_abort by user %d ", ad->opp_transfer_abort);
-				if (!ad->opp_transfer_abort)
-					_bt_create_warning_popup(param->result,
-							BT_STR_UNABLE_TO_RECEIVE);
-				ad->opp_transfer_abort = FALSE;
+				_bt_update_notification(ad, ad->receive_noti, NULL, NULL, NULL);
 			}
-			break;
+		} else if (0 == g_strcmp0(transfer_info->type, TRANSFER_GET)) {
+			INFO("TRANSFER_GET");
+		}
 
-		case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_DISCONNECTED:
-			INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_DISCONNECTED");
-			if (param->result == BLUETOOTH_ERROR_NONE)
-				isTransferConnectedReceived = FALSE;
-			break;
+		if (param->result == BLUETOOTH_ERROR_NONE) {
+			bt_file_type_t file_type;
+			char *extn;
+			bt_file_info_t *info;
 
-		default:
-			break;
+			transfer_info = param->param_data;
+			if (transfer_info->file_path == NULL) {
+				ERR("File path is NULL");
+				break;
+			}
+
+			if (!g_strcmp0(transfer_info->type, TRANSFER_GET)) {
+				DBG("Transfer is GET, so no need to handle");
+				break;
+			}
+
+			name = __get_dest_file_path(transfer_info->file_path);
+
+			extn = strrchr(name, '.');
+			if (NULL != extn)
+				extn++;
+			file_type = __get_file_type(extn);
+
+			INFO("file type %d", file_type);
+
+			if (transfer_info->server_type == FTP_SERVER ||
+					file_type != BT_FILE_VCARD) {
+				if (file_type != BT_FILE_VCAL)
+					__bt_scan_media_file(name);
+				g_free(name);
+				break;
+			}
+
+			info = g_new0(bt_file_info_t, 1);
+			info->file_path = name;
+			info->file_type = file_type;
+
+			if (pthread_create(&thread_id, NULL, (void *)&_bt_obex_writeclose,
+							info) < 0) {
+				ERR("pthread_create() is failed");
+				__free_file_info(info);
+				break;
+			}
+			if (pthread_detach(thread_id) < 0) {
+				ERR("pthread_detach() is failed");
+			}
+		} else {
+			DBG("param->result = %d", param->result);
+			DBG("opp_transfer_abort by user %d ", ad->opp_transfer_abort);
+			if (!ad->opp_transfer_abort)
+				_bt_create_warning_popup(param->result,
+					BT_STR_UNABLE_TO_RECEIVE);
+			ad->opp_transfer_abort = FALSE;
+		}
+		break;
+
+	case BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_DISCONNECTED:
+		INFO("BLUETOOTH_EVENT_OBEX_SERVER_TRANSFER_DISCONNECTED");
+		if (param->result == BLUETOOTH_ERROR_NONE)
+			isTransferConnectedReceived = FALSE;
+		break;
+
+	default:
+		break;
 	}
 
 }
@@ -697,12 +691,12 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 void _bt_get_default_storage(char *storage)
 {
 	int val = BT_DEFAULT_MEM_PHONE;
-	int ret;
+	int ret = 0;
 	char *path = NULL;
 
 	if (vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
 						(void *)&val)) {
-		DBG("vconf error\n");
+		ERR("vconf error");
 		val = BT_DEFAULT_MEM_PHONE;
 	}
 
@@ -710,11 +704,11 @@ void _bt_get_default_storage(char *storage)
 		ret = storage_get_directory(STORAGE_TYPE_EXTERNAL,
 					STORAGE_DIRECTORY_DOWNLOADS, &path);
 
-		if (ret != STORAGE_ERROR_NONE)
-			DBG("Fail to get the download path: %d", ret);
+	if (ret != STORAGE_ERROR_NONE)
+		DBG("Fail to get the download path: %d", ret);
 
-		if (path == NULL)
-			path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
+	if (path == NULL)
+		path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
 	} else {
 		path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
 	}
@@ -769,7 +763,7 @@ static int __bt_get_available_int_memory(double *dAvail)
 		ERR("ret : %d", r);
 	else {
 		INFO("total : %lf, avail : %lf",
-				(double)s.f_frsize*s.f_blocks, (double)s.f_bsize*s.f_bavail);
+		(double)s.f_frsize*s.f_blocks, (double)s.f_bsize*s.f_bavail);
 		*dAvail = (double)s.f_bsize*s.f_bavail;
 	}
 
@@ -811,7 +805,7 @@ static gchar *__bt_get_unique_file_name(char *storage_path, char *filename)
 					filename, seq);
 
 		snprintf(temp_filepath, sizeof(temp_filepath), "%s/%s",
-				storage_path, temp_filename);
+					storage_path, temp_filename);
 
 		/* In below code check is done for unique file name or
 		   Max value of integer reached, in this case overwrite
@@ -827,7 +821,7 @@ static gchar *__bt_get_unique_file_name(char *storage_path, char *filename)
 }
 
 static void __bt_app_obex_openwrite_requested(bt_obex_server_authorize_into_t
-		*server_auth_info)
+							*server_auth_info)
 {
 	ret_if(server_auth_info == NULL);
 	ret_if(server_auth_info->filename == NULL);
@@ -841,8 +835,8 @@ static void __bt_app_obex_openwrite_requested(bt_obex_server_authorize_into_t
 	_bt_get_default_storage(storage);
 
 	/* For vcf file type, some device send weird filename like "telecom/pb.vcf"
-	   This filename should be renamed.
-	 */
+	    This filename should be renamed.
+	*/
 
 	regex = g_regex_new("[*\"<>;?|\\^:/]", 0, 0, NULL);
 	name = g_regex_replace(regex, server_auth_info->filename, -1, 0, "_", 0, NULL);
@@ -855,13 +849,13 @@ static void __bt_app_obex_openwrite_requested(bt_obex_server_authorize_into_t
 	}
 
 	snprintf(temp_filename, BT_FILE_PATH_LEN_MAX, "%s/%s",
-			storage, server_auth_info->filename);
+		    storage, server_auth_info->filename);
 	INFO("temp_filename : %s", temp_filename);
 	if (access(temp_filename, F_OK) == 0) {
 		name = server_auth_info->filename;
 
 		server_auth_info->filename = __bt_get_unique_file_name(storage,
-				name);
+									name);
 
 		g_free(name);
 	}
@@ -898,8 +892,8 @@ static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_aut
 		INFO("available_ext_mem_size =%llu", available_ext_mem_size);
 		if (available_ext_mem_size < server_auth_info->length) {
 			g_timeout_add(BT_APP_POPUP_LAUNCH_TIMEOUT,
-					(GSourceFunc)_bt_app_popup_memoryfull,
-					NULL);
+				(GSourceFunc)_bt_app_popup_memoryfull,
+				NULL);
 			goto reject;
 		}
 	} else {
@@ -911,8 +905,8 @@ static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_aut
 		INFO("available_int_mem_size =%lf", available_ext_mem_size);
 		if (available_int_mem_size < server_auth_info->length) {
 			g_timeout_add(BT_APP_POPUP_LAUNCH_TIMEOUT,
-					(GSourceFunc)_bt_app_popup_memoryfull,
-					NULL);
+				(GSourceFunc)_bt_app_popup_memoryfull,
+				NULL);
 			goto reject;
 		}
 	}
@@ -922,7 +916,7 @@ static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_aut
 	if (isTransferConnectedReceived) {
 		if (notification_status_message_post(BT_STR_RECEIVING) != NOTIFICATION_ERROR_NONE)
 			ERR("notification_status_message_post() is failed");
-		isTransferConnectedReceived = FALSE;
+			isTransferConnectedReceived = FALSE;
 	}
 
 	__bt_app_obex_openwrite_requested(server_auth_info);

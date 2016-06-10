@@ -91,7 +91,6 @@ extern "C" {
 #define BT_ICON_NOTIFICATION_RECEIVED		QP_PRELOAD_NOTI_ICON_PATH"/noti_download_complete.png"
 #define BT_ICON_NOTIFICATION_RECEIVED_INDICATOR		ICONDIR"/B03_Processing_download_complete.png"
 
-
 #ifdef __cplusplus
 }
 #endif

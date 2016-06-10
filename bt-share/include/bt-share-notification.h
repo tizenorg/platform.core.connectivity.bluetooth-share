@@ -67,40 +67,36 @@ typedef enum {
 	CREATE_TR_LIST
 } bt_notification_launch_type_e;
 
-notification_h _bt_create_notification(bt_qp_type_t type);
 
 notification_h _bt_insert_notification(struct bt_appdata *ad, bt_notification_type_e type, int index, int total);
 
 int _bt_update_notification(struct bt_appdata *ad, notification_h noti,
-		char *title, char *content, char *icon_path);
-
+				char *title,
+				char *content,
+				char *icon_path);
 
 int _bt_update_notification_progress(notification_h noti,
-		int id, int val);
-
-gboolean _bt_get_notification_text(int priv_id, char *str);
+				int id,
+				int val);
 
 int _bt_get_notification_priv_id(notification_h noti);
 
 int _bt_delete_notification(notification_h noti);
 
-int _bt_set_notification_property(notification_h noti, int flag);
-
 int _bt_get_notification_priv_id(notification_h noti);
 
 int _bt_set_notification_app_launch(notification_h noti,
-		bt_notification_launch_type_e launch_type,
-		const char *transfer_type,
-		const char *filename,
-		const char *progress_cnt,
-		int transfer_id);
+					bt_notification_launch_type_e launch_type,
+					const char *transfer_type,
+					const char *filename,
+					const char *progress_cnt,
+					int transfer_id);
 
 gboolean _bt_update_notification_status(struct bt_appdata *ad);
 
 void _bt_register_notification_cb(struct bt_appdata *ad);
 
 void _bt_unregister_notification_cb(struct bt_appdata *ad);
-
 
 
 #ifdef __cplusplus

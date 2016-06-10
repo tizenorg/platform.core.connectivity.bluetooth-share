@@ -61,13 +61,13 @@ int _bt_share_block_sleep(gboolean is_block)
 
 	if (is_block) {
 		if (block_sleep_count < 0) {
-			DBG("block_sleep_count[%d] is invalid. It is set to 0.\n",
+			INFO("block_sleep_count[%d] is invalid. It is set to 0.\n",
 				     block_sleep_count);
 			block_sleep_count = 0;
 		} else if (block_sleep_count == 0) {
 			result = display_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
 			if (result != 0) {
-				DBG("LCD Lock is failed with result code [%d]\n", result);
+				INFO("LCD Lock is failed with result code [%d]\n", result);
 			}
 		} else {
 			result = 0;
@@ -78,13 +78,13 @@ int _bt_share_block_sleep(gboolean is_block)
 		}
 	} else {
 		if (block_sleep_count <= 0) {
-			DBG("block_sleep_count[%d] is invalid. It is set to 0.\n",
+			INFO("block_sleep_count[%d] is invalid. It is set to 0.\n",
 				     block_sleep_count);
 			block_sleep_count = 0;
 		} else if (block_sleep_count == 1) {
 			result = display_unlock_state(LCD_OFF, PM_RESET_TIMER);
 			if (result != 0) {
-				DBG("LCD Unlock is failed with result code [%d]\n",
+				INFO("LCD Unlock is failed with result code [%d]\n",
 					     result);
 			}
 		} else {
@@ -111,14 +111,14 @@ int _bt_set_transfer_indicator(gboolean state)
 
 	ret = vconf_get_int(VCONFKEY_BT_STATUS, (void *)&bt_device_state);
 	if (ret != 0) {
-		DBG("Get vconf failed\n");
+		ERR("Get vconf failed\n");
 		return -1;
 	}
 
 	if (state == TRUE) {
 		block_cnt++;
-		if (bt_device_state & BT_STATUS_TRANSFER)
-			return 0;
+		retv_if(bt_device_state & BT_STATUS_OFF, 0);
+		retv_if(bt_device_state & BT_STATUS_TRANSFER, 0);
 		bt_device_state |= BT_STATUS_TRANSFER;
 		event_val = EVT_VAL_BT_TRANSFERING;
 	} else {
@@ -133,12 +133,12 @@ int _bt_set_transfer_indicator(gboolean state)
 	DBG("event_value: %s", event_val);
 
 	if (__bt_eventsystem_set_value(SYS_EVENT_BT_STATE, EVT_KEY_BT_TRANSFERING_STATE,
-				event_val) != ES_R_OK)
+						event_val) != ES_R_OK)
 		ERR("Fail to set value");
 
 	ret = vconf_set_int(VCONFKEY_BT_STATUS, bt_device_state);
 	if (ret != 0) {
-		DBG("Set vconf failed\n");
+		ERR("Set vconf failed\n");
 		return -1;
 	}
 	return 0;

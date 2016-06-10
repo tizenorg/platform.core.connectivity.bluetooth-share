@@ -67,13 +67,13 @@ static void __bt_tr_data_free(bt_tr_data_t *data)
 
 static void __popup_res_cb(int res)
 {
-	DBG("+\n");
+	DBG("+");
 	struct bt_appdata *ad = app_state;
 	if (ad->popups.syspopup_request == FALSE) {
-			DBG("This event is not mine\n");
-			return;
+		DBG("This event is not mine\n");
+		return;
 	}
-	DBG(" res : %d\n", res);
+	DBG(" res : %d", res);
 	/* Inorder to support calling popup from callback, we have to make
 	 * syspopup_request false here and also should not assign
 	 * ad->popups.popup_cb = NULL */
@@ -83,18 +83,17 @@ static void __popup_res_cb(int res)
 	if (NULL != ad->popups.popup_cb) {
 		if (res == 0)
 			ad->popups.popup_cb(ad->popups.popup_cb_data,
-				NULL,
-				(void *)POPUP_RESPONSE_OK);
+					    NULL, (void *)POPUP_RESPONSE_OK);
 		else if (res == 1)
 			ad->popups.popup_cb(ad->popups.popup_cb_data,
-				NULL,
-				(void *)POPUP_RESPONSE_CANCEL);
+					    NULL,
+					    (void *)POPUP_RESPONSE_CANCEL);
 		else if (res == 2)
 			ad->popups.popup_cb(ad->popups.popup_cb_data,
-				NULL,
-				(void *)POPUP_RESPONSE_TIMEOUT);
+					    NULL,
+					    (void *)POPUP_RESPONSE_TIMEOUT);
 	}
-	DBG("-\n");
+	DBG("-");
 }
 
 static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
@@ -201,6 +200,7 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 	INFO("%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X", addr[0],
 	    addr[1], addr[2], addr[3], addr[4], addr[5]);
 	INFO(" cnt( %d )", cnt);
+	DBG(" name ( %s )", name);
 
 	data = g_new0(opc_transfer_info_t, 1);
 	data->content = g_new0(char *, cnt + 1);
@@ -213,6 +213,7 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 
 	for (i = 0; i < cnt; i++) {
 		char *ptr = g_slist_nth_data(list, i);
+		DBG("%s", ptr);
 		if (g_strcmp0(type, "text") == 0)
 			data->file_path[i] = _bt_share_create_transfer_file(ptr);
 		else
@@ -241,69 +242,69 @@ static opc_transfer_info_t *__add_transfer_info(DBusMessage *msg)
 	return data;
 }
 
-
-
 void _free_transfer_info(opc_transfer_info_t *node)
 {
 	int i;
 
-	DBG("+\n");
+	DBG("+");
 	ret_if(node == NULL);
 
 	for (i = 0; i < node->file_cnt; i++) {
-		_bt_remove_tmp_file(node->file_path[i]);
+		//_bt_remove_tmp_file(node->file_path[i]);
 		g_free(node->file_path[i]);
 		g_free(node->content[i]);
+		g_free(node->type[i]);
 	}
 	g_free(node->file_path);
 	g_free(node->content);
 	g_free(node->type);
+	g_free(node->size);
 	g_free(node);
 
-	DBG("-\n");
+	DBG("-");
 }
 
 void _remove_transfer_info(opc_transfer_info_t *node)
 {
-	DBG("+\n");
+	DBG("+");
 	ret_if(node == NULL);
 
 	bt_transfer_list = g_slist_remove(bt_transfer_list, node);
 	_free_transfer_info(node);
 
-	DBG("-\n");
+	DBG("-");
 }
 
 int _request_file_send(opc_transfer_info_t *node)
 {
 	struct bt_appdata *ad = app_state;
 	int ret;
-	DBG("+\n");
+	DBG("+");
 	retv_if(ad == NULL, BLUETOOTH_ERROR_INVALID_PARAM);
 	retv_if(node == NULL, BLUETOOTH_ERROR_INVALID_PARAM);
 
 	ret = bluetooth_opc_push_files((bluetooth_device_address_t *)node->addr,
-						node->file_path);
+					node->file_path);
 	if (ret != BLUETOOTH_ERROR_NONE) {
-		DBG("bluetooth_opc_push_files failed : %d", ret);
+		ERR("bluetooth_opc_push_files failed : %d", ret);
 		return ret;
 	}
 
 	__bt_create_send_data(node);
 
-	DBG("-\n");
+	DBG("-");
 	return BLUETOOTH_ERROR_NONE;
 }
 
 static int __bt_get_owner_info(DBusMessage *msg, char **name,
-		char **previous, char **current)
+				char **previous, char **current)
 {
 	DBusMessageIter item_iter;
 
 	dbus_message_iter_init(msg, &item_iter);
 
 	if (dbus_message_iter_get_arg_type(&item_iter)
-			!= DBUS_TYPE_STRING) {
+					!= DBUS_TYPE_STRING) {
 		ERR("This is bad format dbus\n");
 		return BLUETOOTH_ERROR_INTERNAL;
 	}
@@ -315,7 +316,7 @@ static int __bt_get_owner_info(DBusMessage *msg, char **name,
 	dbus_message_iter_next(&item_iter);
 
 	if (dbus_message_iter_get_arg_type(&item_iter)
-			!= DBUS_TYPE_STRING) {
+					!= DBUS_TYPE_STRING) {
 		ERR("This is bad format dbus\n");
 		return BLUETOOTH_ERROR_INTERNAL;
 	}
@@ -327,7 +328,7 @@ static int __bt_get_owner_info(DBusMessage *msg, char **name,
 	dbus_message_iter_next(&item_iter);
 
 	if (dbus_message_iter_get_arg_type(&item_iter)
-			!= DBUS_TYPE_STRING) {
+					!= DBUS_TYPE_STRING) {
 		ERR("This is bad format dbus\n");
 		return BLUETOOTH_ERROR_INTERNAL;
 	}
@@ -340,7 +341,7 @@ static int __bt_get_owner_info(DBusMessage *msg, char **name,
 }
 
 static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
-							DBusMessage *msg, void *data)
+					DBusMessage *msg, void *data)
 {
 	int ret;
 	char *member;
@@ -359,15 +360,16 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
 	member = (char *)dbus_message_get_member(msg);
-	DBG("member (%s)\n", member);
+	INFO("member (%s)", member);
 
-	if (dbus_message_is_signal(msg, BT_SYSPOPUP_INTERFACE, BT_SYSPOPUP_METHOD_RESPONSE)) {
+	if (dbus_message_is_signal
+	    (msg, BT_SYSPOPUP_INTERFACE, BT_SYSPOPUP_METHOD_RESPONSE)) {
 		int res = 0;
 		dbus_message_get_args(msg, NULL,
-					DBUS_TYPE_INT32, &res,
-					DBUS_TYPE_INVALID);
+				      DBUS_TYPE_INT32, &res, DBUS_TYPE_INVALID);
 		__popup_res_cb(res);
-	} else if (dbus_message_is_signal(msg, BT_UG_IPC_INTERFACE, BT_UG_IPC_METHOD_SEND)) {
+	} else if (dbus_message_is_signal
+		(msg, BT_UG_IPC_INTERFACE, BT_UG_IPC_METHOD_SEND)) {
 		opc_transfer_info_t *node;
 
 #ifdef CYNARA_ENABLE
@@ -389,11 +391,11 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 
 		ret = _request_file_send(node);
 		if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
-			DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
+			INFO("Aleady OPC progressing. Once completed previous job, will be started");
 		} else if (ret != BLUETOOTH_ERROR_NONE) {
 			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL, BT_STR_UNABLE_TO_SEND);
 			g_slist_free_full(bt_transfer_list,
-						(GDestroyNotify)_free_transfer_info);
+					  (GDestroyNotify) _free_transfer_info);
 			bt_transfer_list = NULL;
 		}
 	} else if (dbus_message_is_signal(msg, BT_SHARE_UI_INTERFACE, BT_SHARE_UI_SIGNAL_OPPABORT)) {
@@ -401,9 +403,9 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 		int noti_id = 0;
 
 		if (!dbus_message_get_args(msg, NULL,
-					DBUS_TYPE_STRING, &transfer_type,
-					DBUS_TYPE_INT32, &noti_id,
-					DBUS_TYPE_INVALID)) {
+					   DBUS_TYPE_STRING, &transfer_type,
+					   DBUS_TYPE_INT32, &noti_id,
+					   DBUS_TYPE_INVALID)) {
 			ERR("OPP abort handling failed");
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
@@ -422,7 +424,7 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 			bluetooth_obex_server_cancel_transfer(noti_id);
 		}
 	} else if (dbus_message_is_signal(msg, BT_SHARE_UI_INTERFACE,
-				BT_SHARE_UI_SIGNAL_SEND_FILE)) {
+					  BT_SHARE_UI_SIGNAL_SEND_FILE)) {
 		opc_transfer_info_t *node;
 
 #ifdef CYNARA_ENABLE
@@ -444,26 +446,26 @@ static DBusHandlerResult __event_filter(DBusConnection *sys_conn,
 
 		ret = _request_file_send(node);
 		if (ret == BLUETOOTH_ERROR_IN_PROGRESS) {
-			DBG("Aleady OPC progressing. Once completed previous job, will be started\n");
+			INFO("Aleady OPC progressing. Once completed previous job, will be started");
 		} else if (ret != BLUETOOTH_ERROR_NONE) {
 			_bt_create_warning_popup(BLUETOOTH_ERROR_INTERNAL, BT_STR_UNABLE_TO_SEND);
 			g_slist_free_full(bt_transfer_list,
-							(GDestroyNotify)_free_transfer_info);
+					  (GDestroyNotify) _free_transfer_info);
 			bt_transfer_list = NULL;
 		}
 	} else if (dbus_message_is_signal(msg, BT_SHARE_UI_INTERFACE,
-				BT_SHARE_UI_SIGNAL_INFO_UPDATE)) {
+					  BT_SHARE_UI_SIGNAL_INFO_UPDATE)) {
 		int tr_uid = 0;
 		int tr_type = 0;
 		dbus_message_get_args(msg, NULL,
-					DBUS_TYPE_INT32, &tr_uid,
-					DBUS_TYPE_INT32, &tr_type,
-					DBUS_TYPE_INVALID);
+				      DBUS_TYPE_INT32, &tr_uid,
+				      DBUS_TYPE_INT32, &tr_type,
+				      DBUS_TYPE_INVALID);
 
-		DBG("tr_uid = %d, tr_type = %d \n", tr_uid, tr_type);
+		INFO("tr_uid = %d, tr_type = %d ", tr_uid, tr_type);
 		__bt_share_update_tr_info(tr_uid, tr_type);
 	} else if (dbus_message_is_signal(msg, BT_SHARE_FRWK_INTERFACE,
-				BT_SHARE_FRWK_SIGNAL_DEINIT)) {
+					  BT_SHARE_FRWK_SIGNAL_DEINIT)) {
 		/* Deinitialize the obex server */
 		if (bluetooth_obex_server_deinit() == BLUETOOTH_ERROR_NONE) {
 			DBG("Obex Server deinit");
@@ -545,40 +547,31 @@ gboolean _bt_init_dbus_signal(void)
 	return TRUE;
 }
 
-void _bt_send_message_to_ui(int transfer_id, char *name, int percentage, gboolean completed, int error_type)
+void _bt_update_transfer_list_view(char *db)
 {
 	DBusMessage *msg = NULL;
-	DBG("+\n");
 	ret_if(dbus_connection == NULL);
-	ret_if(name == NULL);
 
 	msg = dbus_message_new_signal(BT_SHARE_ENG_OBJECT,
-				      BT_SHARE_ENG_INTERFACE,
-				      BT_SHARE_ENG_SIGNAL_PROGRESS);
+				BT_SHARE_ENG_INTERFACE,
+				BT_SHARE_ENG_SIGNAL_UPDATE_VIEW);
 	if (!msg) {
-		ERR("Unable to allocate memory\n");
+		ERR("Unable to allocate memory");
 		return;
 	}
+
 	if (!dbus_message_append_args(msg,
-			DBUS_TYPE_INT32, &transfer_id,
-			DBUS_TYPE_STRING, &name,
-			DBUS_TYPE_INT32, &percentage,
-			DBUS_TYPE_BOOLEAN, &completed,
-			DBUS_TYPE_INT32, &error_type,
-			DBUS_TYPE_INVALID)) {
-		ERR("Event sending failed\n");
+				DBUS_TYPE_STRING, &db,
+				DBUS_TYPE_INVALID)) {
+		ERR("Event sending failed");
 		dbus_message_unref(msg);
 		return;
 	}
-	DBG("Dbus send message append request is done.\n");
 
 	dbus_message_set_destination(msg, BT_SHARE_UI_INTERFACE);
 	dbus_connection_send(dbus_connection, msg, NULL);
 	dbus_message_unref(msg);
-	DBG("-\n");
-	return;
 }
-
 
 void _bt_create_warning_popup(int error_type, char *msg)
 {
@@ -589,19 +582,19 @@ void _bt_create_warning_popup(int error_type, char *msg)
 		char str[BT_TEXT_LEN_MAX] = { 0, };
 		bundle *b;
 
-		DBG("error_type: %d", error_type);
+		DBG("error_type: %d",error_type);
 		switch (error_type) {
-			case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
-			case BLUETOOTH_ERROR_NOT_CONNECTED:
-			case BLUETOOTH_ERROR_ACCESS_DENIED:
-			case BLUETOOTH_ERROR_OUT_OF_MEMORY:
-			case BLUETOOTH_ERROR_INTERNAL:
-			case BLUETOOTH_ERROR_CANCEL:
-				snprintf(str, BT_TEXT_LEN_MAX, "%s",
-						msg);
-				break;
-			default:
-				return;
+		case BLUETOOTH_ERROR_SERVICE_NOT_FOUND:
+		case BLUETOOTH_ERROR_NOT_CONNECTED:
+		case BLUETOOTH_ERROR_ACCESS_DENIED:
+		case BLUETOOTH_ERROR_OUT_OF_MEMORY:
+		case BLUETOOTH_ERROR_INTERNAL:
+		case BLUETOOTH_ERROR_CANCEL:
+			snprintf(str, BT_TEXT_LEN_MAX, "%s",
+				 msg);
+			break;
+		default:
+			return;
 		}
 
 		b = bundle_create();
@@ -617,32 +610,6 @@ void _bt_create_warning_popup(int error_type, char *msg)
 	return;
 }
 
-void _bt_update_transfer_list_view(const char *table)
-{
-	DBusMessage *msg = NULL;
-	ret_if(dbus_connection == NULL);
-
-	msg = dbus_message_new_signal(BT_SHARE_ENG_OBJECT,
-				      BT_SHARE_ENG_INTERFACE,
-				      BT_SHARE_ENG_SIGNAL_UPDATE_VIEW);
-	if (!msg) {
-		ERR("Unable to allocate memory\n");
-		return;
-	}
-
-	if (!dbus_message_append_args(msg,
-			DBUS_TYPE_STRING, &table,
-			DBUS_TYPE_INVALID)) {
-		DBG("Event sending failed\n");
-		dbus_message_unref(msg);
-		return;
-	}
-
-	dbus_message_set_destination(msg, BT_SHARE_UI_INTERFACE);
-	dbus_connection_send(dbus_connection, msg, NULL);
-	dbus_message_unref(msg);
-}
-
 static time_t __bt_get_current_timedata(void)
 {
 	time_t t;
@@ -652,12 +619,12 @@ static time_t __bt_get_current_timedata(void)
 
 static char *__bt_conv_addr_type_to_addr_string(char *addr)
 {
-	char address[BT_ADDR_STR_LEN_MAX] = {0,};
+	char address[BT_ADDR_STR_LEN_MAX] = { 0, };
 	retv_if(addr == NULL, NULL);
 
 	snprintf(address, BT_ADDR_STR_LEN_MAX,
-		"%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
-		addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+		 "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+		 addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
 	return g_strdup(address);
 }
@@ -709,14 +676,15 @@ static void __bt_create_send_data(opc_transfer_info_t *node)
 
 	sqlite3 *db = NULL;
 
-	DBG("Name [%s]\n", node->name);
+	DBG("Name [%s]", node->name);
 
 	db = bt_share_open_db();
 	if (!db)
 		return;
 
 	session_id = bt_share_get_last_session_id(db, BT_DB_OUTBOUND);
-	DBG("Last session id = %d\n", session_id);
+
+	INFO("Last session id = %d", session_id);
 	for (count = 0; count < node->file_cnt; count++) {
 		bt_tr_data_t *tmp;
 		tmp = g_malloc0(sizeof(bt_tr_data_t));
@@ -729,14 +697,13 @@ static void __bt_create_send_data(opc_transfer_info_t *node)
 		DBG("tmp->file_path : %s", tmp->file_path);
 
 		tmp->content = g_strdup(node->content[count]);
-		tmp->dev_name =  g_strdup(node->name);
-		tmp->type =  g_strdup(node->type[count]);
+		tmp->dev_name = g_strdup(node->name);
+		tmp->type = g_strdup(node->type[count]);
 		tmp->timestamp = __bt_get_current_timedata();
 		tmp->addr = __bt_conv_addr_type_to_addr_string(node->addr);
 		tmp->size = node->size[count];
 		bt_share_add_tr_data(db, BT_DB_OUTBOUND, tmp);
 		__bt_tr_data_free(tmp);
-
 	}
 
 	if (ad->tr_send_list) {
@@ -760,7 +727,7 @@ gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status)
 {
 	DBG("_bt_update_sent_data_status  \n");
 
-	DBG("uid = %d  \n", uid);
+	INFO("uid = %d", uid);
 	sqlite3 *db = NULL;
 	bt_tr_data_t *tmp;
 
@@ -782,8 +749,8 @@ gboolean _bt_update_sent_data_status(int uid, bt_app_tr_status_t status)
 }
 
 gboolean _bt_add_recv_transfer_status_data(char *device_name,
-					char *filepath, char *type,
-								unsigned int size, int status)
+			char *filepath, char *type,
+			unsigned int size, int status)
 {
 	if (device_name == NULL || filepath == NULL)
 		return FALSE;
@@ -791,7 +758,7 @@ gboolean _bt_add_recv_transfer_status_data(char *device_name,
 	sqlite3 *db = NULL;
 	bt_tr_data_t *tmp;
 
-	DBG("Name [%s]\n", device_name);
+	DBG("Name [%s]", device_name);
 
 	db = bt_share_open_db();
 	if (!db)
@@ -803,7 +770,7 @@ gboolean _bt_add_recv_transfer_status_data(char *device_name,
 
 	tmp->tr_status = status;
 	tmp->file_path = g_strdup(filepath);
-	tmp->dev_name =  g_strdup(device_name);
+	tmp->dev_name = g_strdup(device_name);
 	tmp->timestamp = __bt_get_current_timedata();
 	tmp->type = g_strdup(type);
 	tmp->size = size;
@@ -816,10 +783,10 @@ gboolean _bt_add_recv_transfer_status_data(char *device_name,
 
 static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 {
-	DBG("__bt_share_update_tr_info tr_uid = %d \n", tr_uid);
+	DBG("__bt_share_update_tr_info tr_uid = %d", tr_uid);
+
 	int status = -1;
 	struct bt_appdata *ad = app_state;
-	char str[NOTIFICATION_TEXT_LEN_MAX] = { 0 };
 	bt_tr_data_t *info = NULL;
 	sqlite3 *db = NULL;
 
@@ -835,6 +802,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 			ad->send_noti = NULL;
 			ad->send_data.tr_success = 0;
 			ad->send_data.tr_fail = 0;
+			DBG("clear all");
 			bt_share_remove_tr_data_by_notification(db, BT_DB_OUTBOUND);
 			bt_share_close_db(db);
 		} else {
@@ -843,7 +811,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 			info = bt_share_get_tr_data(db, BT_DB_OUTBOUND, tr_uid);
 			if (info != NULL) {
 				status = info->tr_status;
-				g_free(info);
+				__bt_tr_data_free(info);
 			}
 
 			bt_share_remove_tr_data_by_id(db, BT_DB_OUTBOUND, tr_uid);
@@ -856,12 +824,9 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 			else
 				return;
 
-			if ((ad->send_data.tr_success + ad->send_data.tr_fail) != 0) {
-				snprintf(str, sizeof(str), "%s %d %d", BT_TR_STATUS,
-					ad->send_data.tr_success, ad->send_data.tr_fail);
-
-				_bt_update_notification(ad, ad->send_noti,
-						NULL, NULL, NULL);
+			if ((ad->send_data.tr_success +
+			     ad->send_data.tr_fail) != 0) {
+				_bt_update_notification(ad, ad->send_noti, NULL, NULL, NULL);
 			} else {
 				_bt_delete_notification(ad->send_noti);
 			}
@@ -883,7 +848,7 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 			info = bt_share_get_tr_data(db, BT_DB_INBOUND, tr_uid);
 			if (info != NULL) {
 				status = info->tr_status;
-				g_free(info);
+				__bt_tr_data_free(info);
 			}
 
 			bt_share_remove_tr_data_by_id(db, BT_DB_INBOUND, tr_uid);
@@ -896,19 +861,16 @@ static void __bt_share_update_tr_info(int tr_uid, int tr_type)
 			else
 				return;
 
-			if ((ad->recv_data.tr_success + ad->recv_data.tr_fail) != 0) {
-				snprintf(str, sizeof(str), "%s %d %d", BT_TR_STATUS,
-					ad->recv_data.tr_success, ad->recv_data.tr_fail);
-
-				_bt_update_notification(ad, ad->receive_noti,
-						NULL, NULL, NULL);
+			if ((ad->recv_data.tr_success +
+			     ad->recv_data.tr_fail) != 0) {
+				_bt_update_notification(ad, ad->receive_noti, NULL, NULL, NULL);
 			} else {
 				_bt_delete_notification(ad->receive_noti);
 			}
 		}
 	} else {
-		ERR("Invalid transfer type  \n");
+		ERR("Invalid transfer type");
+		bt_share_close_db(db);
 	}
 	return;
 }
-
