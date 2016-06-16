@@ -24,25 +24,6 @@
 extern "C" {
 #endif
 
-#define STORAGE_PATH_LEN_MAX 255
-#define BT_DEFAULT_MEM_PHONE 0
-#define BT_DEFAULT_MEM_MMC 1
-
-#define BT_DOWNLOAD_DEFAULT_PHONE_FOLDER "/opt/usr/media/Downloads"
-#define BT_DOWNLOAD_DEFAULT_MMC_FOLDER "/opt/storage/sdcard/Downloads"
-#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER "/opt/home/owner/content/Downloads"
-//#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER tzplatform_getenv(TZ_USER_CONTENT)
-
-/*
-#define BT_FTP_FOLDER tzplatform_mkpath(TZ_SYS_SHARE, "bt-ftp")
-*/
-
-#define BT_DOWNLOAD_PHONE_ROOT "/opt/usr/media"
-#define BT_DOWNLOAD_MMC_ROOT "/opt/storage/sdcard"
-#define BT_FTP_FOLDER "/opt/share/bt-ftp"
-#define BT_FTP_FOLDER_PHONE "/opt/share/bt-ftp/Media/"
-#define BT_FTP_FOLDER_MMC "/opt/share/bt-ftp/SD_External/"
-
 void _bt_init_vconf_notification(void *data);
 void _bt_deinit_vconf_notification(void);
 #ifdef __cplusplus

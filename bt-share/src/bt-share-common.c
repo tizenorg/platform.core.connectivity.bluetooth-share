@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <linux/xattr.h>
+#include <storage.h>
 
 #include "vconf-keys.h"
 #include "applog.h"
@@ -245,5 +246,47 @@ char *_bt_share_create_transfer_file(char *text)
 fail:
 	g_free(file);
 	return NULL;
+}
+
+static bool __bt_get_storage_id(int sid, storage_type_e type, storage_state_e state,
+		const char *path, void *user_data)
+{
+	int *storage_id = (int *)user_data;
+
+	if (type == STORAGE_TYPE_EXTERNAL && state == STORAGE_STATE_MOUNTED) {
+		*storage_id = sid;
+		return false;
+	}
+	return true;
+}
+
+char *_bt_share_get_storage_path(int storage_type)
+{
+	int ret = 0;
+	int storage_id = 0;
+	char *path = NULL;
+
+	DBG("storage type: %d", storage_type);
+
+	if (storage_type == BT_DEFAULT_MEM_MMC) {
+		if (storage_foreach_device_supported(__bt_get_storage_id,
+						&storage_id) == STORAGE_ERROR_NONE) {
+			DBG("storage_id = %d", storage_id);
+
+			ret = storage_get_root_directory(storage_id, &path);
+
+			if (ret != STORAGE_ERROR_NONE)
+				DBG("Fail to get the download path: %d", ret);
+		}
+
+		if (path == NULL) {
+			DBG("Fail to get the download path. So use media folder");
+			path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
+		}
+	} else {
+		path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
+	}
+
+	return path;
 }
 

@@ -691,7 +691,6 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 void _bt_get_default_storage(char *storage)
 {
 	int val = BT_DEFAULT_MEM_PHONE;
-	int ret = 0;
 	char *path = NULL;
 
 	if (vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
@@ -700,18 +699,10 @@ void _bt_get_default_storage(char *storage)
 		val = BT_DEFAULT_MEM_PHONE;
 	}
 
-	if (val == BT_DEFAULT_MEM_MMC) {
-		ret = storage_get_directory(STORAGE_TYPE_EXTERNAL,
-					STORAGE_DIRECTORY_DOWNLOADS, &path);
-
-	if (ret != STORAGE_ERROR_NONE)
-		DBG("Fail to get the download path: %d", ret);
+	path = _bt_share_get_storage_path(val);
 
 	if (path == NULL)
-		path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
-	} else {
 		path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
-	}
 
 	g_strlcpy(storage, path, STORAGE_PATH_LEN_MAX);
 	g_free(path);
@@ -770,15 +761,21 @@ static int __bt_get_available_int_memory(double *dAvail)
 	return r;
 }
 
-static gboolean __bt_get_available_ext_memory(unsigned long long *available_mem_size)
+static int __bt_get_available_ext_memory(double *dAvail)
 {
-	struct statfs fs = {0, };
-	if (statfs(BT_DOWNLOAD_MMC_ROOT, &fs) != 0) {
-		*available_mem_size = 0;
-		return FALSE;
+	struct statvfs s;
+	int r;
+
+	r = storage_get_internal_memory_size(&s);
+	if (r < 0)
+		ERR("ret : %d", r);
+	else {
+		INFO("total : %lf, avail : %lf",
+		(double)s.f_frsize*s.f_blocks, (double)s.f_bsize*s.f_bavail);
+		*dAvail = (double)s.f_bsize*s.f_bavail;
 	}
-	*available_mem_size = ((unsigned long long)fs.f_bavail) * ((unsigned long long)fs.f_bsize);
-	return TRUE;
+
+	return r;
 }
 
 static gchar *__bt_get_unique_file_name(char *storage_path, char *filename)
@@ -870,9 +867,7 @@ static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_aut
 	DBG("+");
 
 	int val = -1;
-	gboolean ret = FALSE;
-	unsigned long long available_ext_mem_size = 0;
-	double available_int_mem_size = 0;
+	double available_mem_size = 0;
 
 	if (vconf_get_int(VCONFKEY_SETAPPL_DEFAULT_MEM_BLUETOOTH_INT,
 				(void *)&val)) {
@@ -883,27 +878,25 @@ static void __bt_obex_file_push_auth(bt_obex_server_authorize_into_t *server_aut
 	INFO("File Length = %ld", server_auth_info->length);
 
 	if (val == BT_DEFAULT_MEM_MMC) {
-		ret = __bt_get_available_ext_memory(&available_ext_mem_size);
-		if (ret == FALSE) {
+		if (__bt_get_available_ext_memory(&available_mem_size) < 0) {
 			ERR("Unable to get available memory size");
 			goto reject;
 		}
-
-		INFO("available_ext_mem_size =%llu", available_ext_mem_size);
-		if (available_ext_mem_size < server_auth_info->length) {
+		INFO("available_ext_mem_size =%llu", available_mem_size);
+		if (available_mem_size < server_auth_info->length) {
 			g_timeout_add(BT_APP_POPUP_LAUNCH_TIMEOUT,
 				(GSourceFunc)_bt_app_popup_memoryfull,
 				NULL);
 			goto reject;
 		}
 	} else {
-		if (__bt_get_available_int_memory(&available_int_mem_size) < 0) {
+		if (__bt_get_available_int_memory(&available_mem_size) < 0) {
 			ERR("Unable to get available memory size");
 			goto reject;
 		}
 
-		INFO("available_int_mem_size =%lf", available_ext_mem_size);
-		if (available_int_mem_size < server_auth_info->length) {
+		INFO("available_int_mem_size =%lf", available_mem_size);
+		if (available_mem_size < server_auth_info->length) {
 			g_timeout_add(BT_APP_POPUP_LAUNCH_TIMEOUT,
 				(GSourceFunc)_bt_app_popup_memoryfull,
 				NULL);

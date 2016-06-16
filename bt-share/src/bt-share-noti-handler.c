@@ -28,6 +28,7 @@
 
 #include "applog.h"
 #include "bluetooth-api.h"
+#include "bt-share-common.h"
 #include "bt-share-noti-handler.h"
 #include "bt-share-main.h"
 #include "obex-event-handler.h"
@@ -35,7 +36,6 @@
 
 static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 {
-	int ret;
 	int default_memory = 0;
 	char *root_path = NULL;
 	char *download_path = NULL;
@@ -51,22 +51,14 @@ static void __bt_default_memory_changed_cb(keynode_t *node, void *data)
 		default_memory = vconf_keynode_get_int(node);
 
 		if (default_memory == BT_DEFAULT_MEM_MMC) /* MMC */ {
-			ret = storage_get_directory(STORAGE_TYPE_EXTERNAL,
-						STORAGE_DIRECTORY_DOWNLOADS, &download_path);
-
-			if (ret != STORAGE_ERROR_NONE)
-				DBG("Fail to get the download path: %d", ret);
-
-			ret = storage_get_root_directory(STORAGE_TYPE_EXTERNAL, &root_path);
-
-			if (ret != STORAGE_ERROR_NONE)
-				DBG("Fail to get the root path: %d", ret);
+			download_path = _bt_share_get_storage_path(default_memory);
+			root_path = _bt_share_get_storage_path(default_memory);
 
 			if (download_path == NULL)
-				download_path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
+				download_path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
 
 			if (root_path == NULL)
-				root_path = g_strdup(BT_DOWNLOAD_DEFAULT_MMC_FOLDER);
+				root_path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);
 
 		} else {
 			download_path = g_strdup(BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER);

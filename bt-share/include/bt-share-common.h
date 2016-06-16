@@ -30,6 +30,26 @@ extern "C" {
 #define BT_SHARE_FAIL -1
 #define BT_SHARE_ERROR_NONE 0
 
+#define BT_DEFAULT_MEM_PHONE 0
+#define BT_DEFAULT_MEM_MMC 1
+
+#define STORAGE_PATH_LEN_MAX 255
+
+#define BT_DOWNLOAD_DEFAULT_PHONE_FOLDER "/opt/home/owner/content/Downloads"
+#define BT_DOWNLOAD_DEFAULT_MMC_FOLDER "/opt/media/SDCardA1"
+#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER "/opt/home/owner/content/Downloads"
+//#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER tzplatform_getenv(TZ_USER_CONTENT)
+
+/*
+#define BT_FTP_FOLDER tzplatform_mkpath(TZ_SYS_SHARE, "bt-ftp")
+*/
+
+#define BT_DOWNLOAD_PHONE_ROOT "/opt/home/owner/content/"
+#define BT_DOWNLOAD_MMC_ROOT "/opt/media/SDCardA1"
+#define BT_FTP_FOLDER "/opt/share/bt-ftp"
+#define BT_FTP_FOLDER_PHONE "/opt/share/bt-ftp/Media/"
+#define BT_FTP_FOLDER_MMC "/opt/share/bt-ftp/SD_External/"
+
 //#define BT_TMP_DIR "/opt/home/owner/content/Downloads/.bluetooth/"
 #define BT_TMP_DIR "/opt/home/owner/content/Downloads/"
 #define BT_TMP_FILE BT_TMP_DIR"bluetooth_content_share"
@@ -60,6 +80,7 @@ int _bt_set_transfer_indicator(gboolean state);
 char *_bt_share_create_transfer_file(char *text);
 void _bt_remove_tmp_file(char *file_path);
 void _bt_remove_vcf_file(char *file_path);
+char *_bt_share_get_storage_path(int storage_type);
 
 #ifdef __cplusplus
 }
