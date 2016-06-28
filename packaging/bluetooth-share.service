@@ -1,0 +1,10 @@
+[Unit]
+Description=Bluetooth service
+
+[Service]
+User=owner
+Group=users
+SupplementaryGroups=priv_mediastorage priv_externalstorage
+Type=simple
+ExecStart=/usr/bin/bluetooth-share
+KillMode=process

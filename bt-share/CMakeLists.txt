@@ -57,4 +57,4 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${CALENDAR_SERVICE2_LDFLAG
 
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION share/dbus-1/system-services)
+#INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/org.bluetooth.share.service DESTINATION share/dbus-1/system-services)

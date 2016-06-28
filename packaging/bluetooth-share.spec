@@ -82,10 +82,12 @@ make
 %make_install
 
 install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_DATA}/%{name}/init_db.sh
+install -D -m 0644 packaging/bluetooth-share.service %{buildroot}%{_libdir}/systemd/system/bluetooth-share.service
 
 %post -n libbluetooth-share-devel -p /sbin/ldconfig
 
 %post -n libbluetooth-share -p /sbin/ldconfig
+ln -sf %{_libdir}/systemd/system/bluetooth-share.service %{_sysconfdir}/systemd/default-extra-dependencies/ignore-units.d/
 
 %postun -n libbluetooth-share-devel -p /sbin/ldconfig
 
@@ -95,8 +97,9 @@ install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_DATA}/%{name}/init_db.sh
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
-%{_datadir}/dbus-1/system-services/org.bluetooth.share.service
+#%{_datadir}/dbus-1/system-services/org.bluetooth.share.service
 %{TZ_SYS_DATA}/%{name}/init_db.sh
+%{_libdir}/systemd/system/bluetooth-share.service
 
 %files -n libbluetooth-share
 %manifest libbluetooth-share.manifest

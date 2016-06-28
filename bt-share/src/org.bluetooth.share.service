@@ -1,3 +1,4 @@
 [D-BUS Service]
 Name=org.bluetooth.share
-Exec=/usr/bin/bluetooth-share
+Exec=/bin/false
+SystemdService=bluetooth-share.service
