@@ -244,6 +244,7 @@ int _bt_init_obex_server(void)
 	return BT_SHARE_ERROR_NONE;
 }
 
+#if 0
 void __bt_create_transfer_db(void)
 {
 	struct stat sts;
@@ -259,6 +260,7 @@ void __bt_create_transfer_db(void)
 			ERR("Exit code of epp not clean: %i", ret);
 	}
 }
+#endif
 
 int main(void)
 {
@@ -270,7 +272,9 @@ int main(void)
 
 	signal(SIGTERM, __bt_sigterm_handler);
 
+#if 0
 	__bt_create_transfer_db();
+#endif
 
 	if (__bt_dbus_request_name() == FALSE) {
 		INFO("Aleady dbus instance existed");
@@ -285,20 +289,19 @@ int main(void)
 	if (appcore_set_i18n(BT_COMMON_PKG, BT_COMMON_RES) < 0)
 		return -1;
 
+#if 0
 	uid_t network_user = 5001; /* uid of owner */
 	gid_t network_group = 100; /* gid of users */
 
-#if 0
 	uid_t network_user = 551; /* uid of network_fw */
 	gid_t network_group = 551; /* gid of network_fw */
 	initgroups("network_fw", network_group);
-#endif
 	initgroups("users", network_group);
 	ret = setgid(network_group);
 	DBG("setgid return : %d", ret);
 	ret = setuid(network_user);
 	DBG("setuid return : %d", ret);
-
+#endif
 	if (_bt_share_cynara_init()) {
 		ERR("Failed to initialize Cynara.\n");
 		return -1;
