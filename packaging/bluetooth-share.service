@@ -8,4 +8,3 @@ SupplementaryGroups=priv_mediastorage priv_externalstorage
 Type=simple
 ExecStart=/usr/bin/bluetooth-share
 KillMode=process
-Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/5001/dbus/user_bus_socket

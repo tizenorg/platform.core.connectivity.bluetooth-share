@@ -84,9 +84,9 @@ make
 install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_DATA}/%{name}/init_db.sh
 install -D -m 0644 packaging/bluetooth-share.service %{buildroot}%{_libdir}/systemd/system/bluetooth-share.service
 
-%post
-/sbin/ldconfig
-%{TZ_SYS_DATA}/%{name}/init_db.sh
+#%post
+#/sbin/ldconfig
+#%{TZ_SYS_DATA}/%{name}/init_db.sh
 
 %post -n libbluetooth-share-devel -p /sbin/ldconfig
 
