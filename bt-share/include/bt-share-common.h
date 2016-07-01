@@ -35,23 +35,23 @@ extern "C" {
 
 #define STORAGE_PATH_LEN_MAX 255
 
-#define BT_DOWNLOAD_DEFAULT_PHONE_FOLDER "/home/owner/content/Downloads"
+#define BT_DOWNLOAD_DEFAULT_PHONE_FOLDER "/opt/home/owner/content/Downloads"
 #define BT_DOWNLOAD_DEFAULT_MMC_FOLDER "/opt/media/SDCardA1"
-#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER "/home/owner/content/Downloads"
+#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER "/opt/home/owner/content/Downloads"
 //#define BT_DOWNLOAD_DEFAULT_MEDIA_FOLDER tzplatform_getenv(TZ_USER_CONTENT)
 
 /*
 #define BT_FTP_FOLDER tzplatform_mkpath(TZ_SYS_SHARE, "bt-ftp")
 */
 
-#define BT_DOWNLOAD_PHONE_ROOT "/home/owner/content/"
+#define BT_DOWNLOAD_PHONE_ROOT "/opt/home/owner/content/"
 #define BT_DOWNLOAD_MMC_ROOT "/opt/media/SDCardA1"
 #define BT_FTP_FOLDER "/opt/share/bt-ftp"
 #define BT_FTP_FOLDER_PHONE "/opt/share/bt-ftp/Media/"
 #define BT_FTP_FOLDER_MMC "/opt/share/bt-ftp/SD_External/"
 
 //#define BT_TMP_DIR "/opt/home/owner/content/Downloads/.bluetooth/"
-#define BT_TMP_DIR "/home/owner/content/Downloads/"
+#define BT_TMP_DIR "/opt/home/owner/content/Downloads/"
 #define BT_TMP_FILE BT_TMP_DIR"bluetooth_content_share"
 #define TXT_FILE_NAME BT_TMP_DIR"bluetooth_content_share.txt"
 #define HTML_FILE_NAME BT_TMP_DIR"bluetooth_content_share.html"
@@ -60,7 +60,7 @@ extern "C" {
 #define HTML_FORMAT "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=UTF-8\"/></head><body><a href=\"%s\">%s</a></body></html>"
 
 //#define BT_CONTACT_SHARE_TMP_DIR "/opt/home/owner/content/Downloads/.bluetooth/"
-#define BT_CONTACT_SHARE_TMP_DIR "/home/owner/content/Downloads/"
+#define BT_CONTACT_SHARE_TMP_DIR "/opt/home/owner/content/Downloads/"
 
 typedef enum {
 	BT_HTTP_FILE,
