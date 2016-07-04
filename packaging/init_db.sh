@@ -5,7 +5,7 @@ eval $(tzplatform-get TZ_SYS_DB)
 
 if [ ! -f $TZ_SYS_DB/.bluetooth_transfer.db ]
 then
-	sqlite3 $TZ_SYS_DB/.bluetooth_transfer.db 'PRAGMA journal_mode = PERSIST;
+	/usr/bin/sqlite3 $TZ_SYS_DB/.bluetooth_transfer.db 'PRAGMA journal_mode = PERSIST;
         create table if not exists inbound (
 		id INTEGER PRIMARY KEY autoincrement,
 		sid INTEGER,
@@ -31,15 +31,10 @@ then
 	'
 fi
 
-#chown network_fw:network_fw $TZ_SYS_DB/.bluetooth_transfer.db
-#chown network_fw:network_fw $TZ_SYS_DB/.bluetooth_transfer.db-journal
-chown 5001:100 $TZ_SYS_DB/.bluetooth_transfer.db
-chown 5001:100 $TZ_SYS_DB/.bluetooth_transfer.db-journal
-chmod 664 $TZ_SYS_DB/.bluetooth_transfer.db
-chmod 664 $TZ_SYS_DB/.bluetooth_transfer.db-journal
+/usr/bin/chown 5001:100 $TZ_SYS_DB/.bluetooth_transfer.db
+/usr/bin/chown 5001:100 $TZ_SYS_DB/.bluetooth_transfer.db-journal
+/usr/bin/chmod 664 $TZ_SYS_DB/.bluetooth_transfer.db
+/usr/bin/chmod 664 $TZ_SYS_DB/.bluetooth_transfer.db-journal
 
-if [ -f /usr/lib/rpm-plugins/msm.so ]
-then
-	chsmack -a '*' $TZ_SYS_DB/.bluetooth_transfer.db
-	chsmack -a '*' $TZ_SYS_DB/.bluetooth_transfer.db-journal
-fi
+/usr/bin/chsmack -a 'User::Home' $TZ_SYS_DB/.bluetooth_transfer.db
+/usr/bin/chsmack -a 'User::Home' $TZ_SYS_DB/.bluetooth_transfer.db-journal
