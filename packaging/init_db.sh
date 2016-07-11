@@ -15,7 +15,8 @@ then
 		timestamp INTEGER default 0,
 		addr TEXT,
 		type TEXT,
-		content TEXT
+		content TEXT,
+		size INTEGER
 	);
 	create table if not exists outbound (
 		id INTEGER PRIMARY KEY autoincrement,
@@ -26,7 +27,8 @@ then
 		timestamp INTEGER default 0,
 		addr TEXT,
 		type TEXT,
-		content TEXT
+		content TEXT,
+		size INTEGER
 	);
 	'
 fi

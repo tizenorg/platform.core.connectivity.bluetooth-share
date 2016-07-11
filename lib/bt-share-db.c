@@ -100,9 +100,9 @@ static int __bt_db_insert_record(sqlite3 *db, int db_table, bt_tr_data_t *data)
 	retvm_if(data == NULL, BT_SHARE_ERR_INTERNAL, "Insert data is null");
 
 	snprintf(query, BT_DB_QUERY_LEN,
-		"INSERT INTO %s (id, sid, tr_status, file_path, dev_name, timestamp, addr, type, content) VALUES(?, '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s');",
+		"INSERT INTO %s (id, sid, tr_status, file_path, dev_name, timestamp, addr, type, content, size) VALUES(?, '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%d');",
 		TABLE(db_table), data->sid, data->tr_status, data->file_path,
-		data->dev_name, data->timestamp, data->addr, data->type, data->content);
+		data->dev_name, data->timestamp, data->addr, data->type, data->content, data->size);
 
 	ret = sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);
 	if (ret != SQLITE_OK)
@@ -180,12 +180,13 @@ static bt_tr_data_t *__bt_db_get_record_by_id(sqlite3 *db, int db_table, int id)
 		data->addr = g_strdup(TEXT(stmt, idx++));
 		data->type = g_strdup(TEXT(stmt, idx++));
 		data->content = g_strdup(TEXT(stmt, idx++));
+		data->size = INT(stmt, idx++);
 	} else {
 		goto error;
 	}
 
-	DBG("%d, %d, %s, %s, %d, %s\n", data->sid, data->tr_status, data->file_path,
-			data->dev_name, data->timestamp, data->addr);
+	DBG("%d, %d, %s, %s, %d, %s, %d\n", data->sid, data->tr_status, data->file_path,
+			data->dev_name, data->timestamp, data->addr, data->size);
 
 	sqlite3_finalize(stmt);
 
@@ -231,6 +232,7 @@ static GSList *__bt_db_get_record_list(sqlite3 *db, const char*query)
 		data->addr = g_strdup(TEXT(stmt, idx++));
 		data->type = g_strdup(TEXT(stmt, idx++));
 		data->content = g_strdup(TEXT(stmt, idx++));
+		data->size = INT(stmt, idx++);
 
 		slist = g_slist_append(slist, data);
 
