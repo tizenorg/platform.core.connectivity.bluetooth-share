@@ -410,6 +410,8 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 				_bt_create_warning_popup(param->result,
 					BT_STR_UNABLE_TO_SEND);
 			ad->opp_transfer_abort = FALSE;
+			_bt_update_transfer_list_view("outbound");
+			break;
 		} else {
 			_bt_update_sent_data_status(ad->current_tr_uid,
 							BT_TR_SUCCESS);
@@ -432,6 +434,15 @@ void _bt_share_event_handler(int event, bluetooth_event_param_t *param,
 				break;
 			}
 			if (!ad->tr_next_data) {
+				send_index = 0;
+				_bt_share_block_sleep(FALSE);
+				_bt_set_transfer_indicator(FALSE);
+				_remove_transfer_info(node);
+				if (!ad->tr_next_data) {
+					bt_share_release_tr_data_list(ad->tr_send_list);
+					ad->tr_send_list = NULL;
+				}
+
 				ERR("ad>tr_next_data is NULL");
 				break;
 			}
