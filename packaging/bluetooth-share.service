@@ -6,5 +6,6 @@ User=owner
 Group=users
 SupplementaryGroups=priv_mediastorage priv_externalstorage
 Type=simple
+SmackProcessLabel=System
 ExecStart=/usr/bin/bluetooth-share
 KillMode=process
