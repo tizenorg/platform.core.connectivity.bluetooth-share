@@ -1,4 +1,4 @@
-%define TZ_SYS_DATA /opt/data/
+%define TZ_COMM_DATA /opt/usr/data/
 
 Name:       bluetooth-share
 Summary:    Bluetooth file share Agent
@@ -81,12 +81,12 @@ make
 %install
 %make_install
 
-install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_SYS_DATA}/%{name}/init_db.sh
+install -D -m 0755 %{SOURCE1004} %{buildroot}%{TZ_COMM_DATA}/%{name}/init_db.sh
 install -D -m 0644 packaging/bluetooth-share.service %{buildroot}%{_libdir}/systemd/system/bluetooth-share.service
 
 %post
 /sbin/ldconfig
-%{TZ_SYS_DATA}/%{name}/init_db.sh
+%{TZ_COMM_DATA}/%{name}/init_db.sh
 ln -sf %{_libdir}/systemd/system/bluetooth-share.service %{_sysconfdir}/systemd/default-extra-dependencies/ignore-units.d/
 
 %post -n libbluetooth-share-devel -p /sbin/ldconfig
@@ -102,7 +102,7 @@ ln -sf %{_libdir}/systemd/system/bluetooth-share.service %{_sysconfdir}/systemd/
 %defattr(-,root,root,-)
 %{_bindir}/bluetooth-share
 #%{_datadir}/dbus-1/system-services/org.bluetooth.share.service
-%{TZ_SYS_DATA}/%{name}/init_db.sh
+%{TZ_COMM_DATA}/%{name}/init_db.sh
 %{_libdir}/systemd/system/bluetooth-share.service
 
 %files -n libbluetooth-share
